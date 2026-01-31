@@ -33,20 +33,31 @@ jobs:
           npm run build
 
       # Docker build and deploy
-      - name: Disable Docker credential store
+      - name: Disable Docker credential helper
         run: |
-          cp ~/.docker/config.json ~/.docker/config.json.bak
-          cat ~/.docker/config.json.bak | sed 's/"credsStore":[[:space:]]*"[^"]*"/"credsStore": ""/g' > ~/.docker/config.json
-          cat ~/.docker/config.json
+          # Rename credential helper to prevent Keychain access in non-interactive session
+          if [ -f /usr/local/bin/docker-credential-desktop ]; then
+            mv /usr/local/bin/docker-credential-desktop /usr/local/bin/docker-credential-desktop.disabled
+          fi
+          # Also clear credsStore in config
+          if [ -f ~/.docker/config.json ]; then
+            cp ~/.docker/config.json ~/.docker/config.json.bak
+            sed 's/"credsStore":[[:space:]]*"[^"]*"/"credsStore": ""/g' ~/.docker/config.json.bak > ~/.docker/config.json
+          fi
 
       - name: Build Docker images
         timeout-minutes: 10
         run: docker compose build
 
-      - name: Restore Docker config
+      - name: Restore Docker credential helper
         if: always()
         run: |
-          [ -f ~/.docker/config.json.bak ] && mv ~/.docker/config.json.bak ~/.docker/config.json || true
+          if [ -f /usr/local/bin/docker-credential-desktop.disabled ]; then
+            mv /usr/local/bin/docker-credential-desktop.disabled /usr/local/bin/docker-credential-desktop
+          fi
+          if [ -f ~/.docker/config.json.bak ]; then
+            mv ~/.docker/config.json.bak ~/.docker/config.json
+          fi
 
       - name: Stop existing containers
         run: docker compose down --timeout 30
