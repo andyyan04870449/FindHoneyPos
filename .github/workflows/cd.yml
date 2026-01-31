@@ -46,11 +46,11 @@ jobs:
           # Create a no-op credential helper to prevent Keychain access
           printf '#!/bin/sh\necho "{}"' > /tmp/docker-cd/docker-credential-desktop
           chmod +x /tmp/docker-cd/docker-credential-desktop
+          # Add to PATH so Docker finds the no-op helper
+          echo "/tmp/docker-cd" >> $GITHUB_PATH
 
       - name: Build Docker images
         timeout-minutes: 10
-        env:
-          PATH: /tmp/docker-cd:${{ env.PATH }}
         run: docker compose build
 
       - name: Stop existing containers
