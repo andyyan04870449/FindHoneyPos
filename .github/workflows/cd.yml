@@ -65,6 +65,21 @@ jobs:
           echo "Backend health check failed"
           exit 1
 
+      # Restart ngrok tunnels
+      - name: Restart ngrok
+        run: |
+          pkill -f ngrok || true
+          sleep 2
+          nohup ngrok start --all > /dev/null 2>&1 &
+          sleep 5
+          # Verify tunnels are up
+          TUNNEL_COUNT=$(curl -s http://127.0.0.1:4040/api/tunnels | python3 -c "import sys,json; print(len(json.load(sys.stdin)['tunnels']))")
+          echo "Active tunnels: $TUNNEL_COUNT"
+          if [ "$TUNNEL_COUNT" -lt 1 ]; then
+            echo "ngrok failed to start tunnels"
+            exit 1
+          fi
+
       # Cleanup
       - name: Prune unused images
         run: docker image prune -f
