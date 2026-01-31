@@ -34,7 +34,7 @@ jobs:
 
       # Docker build and deploy
       - name: Unlock macOS Keychain
-        run: security unlock-keychain -p "" ~/Library/Keychains/login.keychain-db
+        run: security unlock-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" ~/Library/Keychains/login.keychain-db
 
       - name: Build Docker images
         timeout-minutes: 10
