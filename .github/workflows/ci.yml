@@ -8,7 +8,6 @@ on:
 
 jobs:
   build-frontend:
-    name: Build Frontend
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -18,7 +17,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: Frontend/package-lock.json
 
@@ -26,7 +25,6 @@ jobs:
       - run: npm run build
 
   build-backend:
-    name: Build Backend
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,7 +34,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: Backend/package-lock.json
 
