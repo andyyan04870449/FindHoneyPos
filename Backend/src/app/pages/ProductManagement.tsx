@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Pencil, Trash2, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
 import { Input } from '@/app/components/ui/input';
@@ -15,21 +15,35 @@ import {
 import { Label } from '@/app/components/ui/label';
 import { toast } from 'sonner';
 import type { Product } from '@/types';
-import { mockProducts } from '@/data/mockData';
+import { api } from '@/lib/api';
 
 export function ProductManagement() {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     price: '',
   });
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const fetchProducts = useCallback(async () => {
+    try {
+      const params = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : '';
+      const data = await api<Product[]>(`/api/admin/products${params}`);
+      setProducts(data);
+    } catch (err) {
+      console.error('Failed to fetch products:', err);
+      toast.error('載入商品失敗');
+    } finally {
+      setLoading(false);
+    }
+  }, [searchTerm]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const handleAddProduct = () => {
     setEditingProduct(null);
@@ -46,39 +60,63 @@ export function ProductManagement() {
     setIsDialogOpen(true);
   };
 
-  const handleDeleteProduct = (productId: string) => {
-    setProducts(products.filter((p) => p.id !== productId));
-    toast.success('商品已刪除');
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      await api(`/api/admin/products/${productId}`, { method: 'DELETE' });
+      toast.success('商品已刪除');
+      fetchProducts();
+    } catch (err) {
+      console.error('Failed to delete product:', err);
+      toast.error('刪除商品失敗');
+    }
   };
 
-  const handleSubmit = () => {
+  const handleToggleStatus = async (product: Product) => {
+    try {
+      await api(`/api/admin/products/${product.id}/status`, { method: 'PATCH' });
+      toast.success(product.status === 'Active' ? '商品已下架' : '商品已上架');
+      fetchProducts();
+    } catch (err) {
+      console.error('Failed to toggle product status:', err);
+      toast.error('更新狀態失敗');
+    }
+  };
+
+  const handleSubmit = async () => {
     if (!formData.name || !formData.price) {
       toast.error('請填寫所有欄位');
       return;
     }
 
-    if (editingProduct) {
-      setProducts(
-        products.map((p) =>
-          p.id === editingProduct.id
-            ? { ...p, name: formData.name, price: parseFloat(formData.price) }
-            : p
-        )
-      );
-      toast.success('商品已更新');
-    } else {
-      const newProduct: Product = {
-        id: Date.now().toString(),
-        name: formData.name,
-        price: parseFloat(formData.price),
-        status: 'active',
-      };
-      setProducts([...products, newProduct]);
-      toast.success('商品已新增');
+    try {
+      if (editingProduct) {
+        await api(`/api/admin/products/${editingProduct.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ name: formData.name, price: parseFloat(formData.price) }),
+        });
+        toast.success('商品已更新');
+      } else {
+        await api('/api/admin/products', {
+          method: 'POST',
+          body: JSON.stringify({ name: formData.name, price: parseFloat(formData.price) }),
+        });
+        toast.success('商品已新增');
+      }
+      setIsDialogOpen(false);
+      fetchProducts();
+    } catch (err) {
+      console.error('Failed to save product:', err);
+      toast.error('儲存商品失敗');
     }
-
-    setIsDialogOpen(false);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -117,16 +155,17 @@ export function ProductManagement() {
               </tr>
             </thead>
             <tbody>
-              {filteredProducts.map((product) => (
+              {products.map((product) => (
                 <tr key={product.id} className="border-b hover:bg-gray-50">
                   <td className="py-3 px-4 font-medium">{product.name}</td>
                   <td className="py-3 px-4 text-right font-semibold">NT$ {product.price}</td>
                   <td className="py-3 px-4 text-center">
                     <Badge
-                      variant={product.status === 'active' ? 'default' : 'secondary'}
-                      className={product.status === 'active' ? 'bg-green-100 text-green-700' : ''}
+                      variant={product.status === 'Active' ? 'default' : 'secondary'}
+                      className={`cursor-pointer ${product.status === 'Active' ? 'bg-green-100 text-green-700' : ''}`}
+                      onClick={() => handleToggleStatus(product)}
                     >
-                      {product.status === 'active' ? '上架中' : '已下架'}
+                      {product.status === 'Active' ? '上架中' : '已下架'}
                     </Badge>
                   </td>
                   <td className="py-3 px-4">
@@ -150,7 +189,7 @@ export function ProductManagement() {
           </table>
         </div>
 
-        {filteredProducts.length === 0 && (
+        {products.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">沒有找到符合的商品</p>
           </div>

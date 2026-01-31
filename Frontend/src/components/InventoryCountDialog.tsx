@@ -22,16 +22,18 @@ export function InventoryCountDialog({
 }: InventoryCountDialogProps) {
   const [inventory, setInventory] = useState<Record<string, number>>({});
 
+  const safeProducts = Array.isArray(products) ? products : [];
+
   // 初始化庫存數據
   useEffect(() => {
     if (open) {
       const initialInventory: Record<string, number> = {};
-      products.forEach(product => {
+      safeProducts.forEach(product => {
         initialInventory[product.id] = initialData?.[product.id] || 0;
       });
       setInventory(initialInventory);
     }
-  }, [open, products, initialData]);
+  }, [open, safeProducts, initialData]);
 
   const handleQuantityChange = (productId: string, value: string) => {
     const numValue = parseInt(value) || 0;
@@ -91,7 +93,7 @@ export function InventoryCountDialog({
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {products.map((product) => (
+            {safeProducts.map((product) => (
               <div
                 key={product.id}
                 className="bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-brand-orange transition-colors"

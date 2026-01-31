@@ -7,31 +7,31 @@ import type { Product } from '../types';
 
 interface ProductGridProps {
   products: Product[];
-  onAddToCart: (product: Product) => void;
-  onRemoveFromCart: (productId: string) => void;
+  onProductClick: (product: Product) => void;
   getProductQuantity: (productId: string) => number;
 }
 
-export function ProductGrid({ 
-  products, 
-  onAddToCart, 
-  onRemoveFromCart, 
-  getProductQuantity 
+export function ProductGrid({
+  products,
+  onProductClick,
+  getProductQuantity,
 }: ProductGridProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
+  const safeProducts = Array.isArray(products) ? products : [];
+
   const filteredProducts = useMemo(() => {
-    if (!searchTerm.trim()) return products;
-    
+    if (!searchTerm.trim()) return safeProducts;
+
     const term = searchTerm.toLowerCase();
-    const filtered = products.filter(product =>
+    const filtered = safeProducts.filter(product =>
       product.name.toLowerCase().includes(term) ||
       product.id.toLowerCase().includes(term)
     );
-    
+
     logger.debug('商品搜尋', { searchTerm, resultCount: filtered.length });
     return filtered;
-  }, [products, searchTerm]);
+  }, [safeProducts, searchTerm]);
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -88,8 +88,7 @@ export function ProductGrid({
               price={product.price}
               quantity={getProductQuantity(product.id)}
               isPopular={product.isPopular}
-              onIncrease={() => onAddToCart(product)}
-              onDecrease={() => onRemoveFromCart(product.id)}
+              onClick={() => onProductClick(product)}
             />
           ))}
         </div>

@@ -2,7 +2,12 @@ export interface Product {
   id: string;
   name: string;
   price: number;
-  status: 'active' | 'inactive';
+  status: 'Active' | 'Inactive';
+}
+
+export interface OrderItemAddon {
+  name: string;
+  price: number;
 }
 
 export interface OrderItem {
@@ -10,18 +15,21 @@ export interface OrderItem {
   price: number;
   quantity: number;
   subtotal: number;
+  addons: OrderItemAddon[];
 }
 
 export interface Order {
-  id: string;
+  id: number;
   orderNumber: string;
-  time: Date;
+  timestamp: string;
   items: OrderItem[];
   subtotal: number;
-  discount: number;
+  discountAmount: number;
   total: number;
   status: 'completed' | 'cancelled';
   paymentMethod: string;
+  discountType?: string;
+  discountValue?: number;
 }
 
 export interface Discount {
@@ -99,4 +107,33 @@ export interface TopProduct {
   quantity?: number;
   sales?: number;
   revenue: string | number;
+}
+
+// Auth Types
+export interface AuthUser {
+  id: number;
+  username: string;
+  displayName: string;
+  isActive: boolean;
+  createdAt: string;
+  lastLoginAt?: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: AuthUser;
+}
+
+export interface SystemStatus {
+  initialized: boolean;
+}
+
+export interface AuditLogEntry {
+  id: number;
+  userId?: number;
+  username: string;
+  action: string;
+  detail?: string;
+  ipAddress?: string;
+  createdAt: string;
 }

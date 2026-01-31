@@ -1,0 +1,39 @@
+namespace FindHoneyPos.Api.Controllers.Admin;
+
+using FindHoneyPos.Api.DTOs;
+using FindHoneyPos.Core.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+[ApiController]
+[Authorize]
+[Route("api/admin/dashboard")]
+public class DashboardController : ControllerBase
+{
+    private readonly IDashboardService _dashboardService;
+
+    public DashboardController(IDashboardService dashboardService)
+    {
+        _dashboardService = dashboardService;
+    }
+
+    [HttpGet("kpi")]
+    public async Task<IActionResult> GetKpi()
+        => Ok(ApiResponse<object>.Ok(await _dashboardService.GetKpiAsync()));
+
+    [HttpGet("sales-trend")]
+    public async Task<IActionResult> GetSalesTrend([FromQuery] int days = 7)
+        => Ok(ApiResponse<object>.Ok(await _dashboardService.GetSalesTrendAsync(days)));
+
+    [HttpGet("top-products")]
+    public async Task<IActionResult> GetTopProducts([FromQuery] int limit = 5)
+        => Ok(ApiResponse<object>.Ok(await _dashboardService.GetTopProductsAsync(limit)));
+
+    [HttpGet("addon-kpi")]
+    public async Task<IActionResult> GetAddonKpi()
+        => Ok(ApiResponse<object>.Ok(await _dashboardService.GetAddonKpiAsync()));
+
+    [HttpGet("customer-tag-kpi")]
+    public async Task<IActionResult> GetCustomerTagKpi()
+        => Ok(ApiResponse<object>.Ok(await _dashboardService.GetCustomerTagKpiAsync()));
+}

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Eye, Calendar, Filter } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Eye, Filter, Loader2 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
@@ -17,33 +17,64 @@ import {
   SelectValue,
 } from '@/app/components/ui/select';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 import type { Order } from '@/types';
-import { mockOrders } from '@/data/mockData';
+import { api } from '@/lib/api';
+
+interface OrderStats {
+  total: number;
+  completed: number;
+  cancelled: number;
+  totalRevenue: number;
+}
 
 export function OrderManagement() {
-  const [orders] = useState<Order[]>(mockOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [stats, setStats] = useState<OrderStats>({ total: 0, completed: 0, cancelled: 0, totalRevenue: 0 });
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [loading, setLoading] = useState(true);
 
-  const filteredOrders = orders.filter((order) => {
-    if (statusFilter === 'all') return true;
-    return order.status === statusFilter;
-  });
+  const fetchOrders = useCallback(async () => {
+    try {
+      const params = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
+      const data = await api<Order[]>(`/api/admin/orders${params}`);
+      setOrders(data);
+    } catch (err) {
+      console.error('Failed to fetch orders:', err);
+      toast.error('載入訂單失敗');
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter]);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const data = await api<OrderStats>('/api/admin/orders/stats');
+      setStats(data);
+    } catch (err) {
+      console.error('Failed to fetch order stats:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+    fetchStats();
+  }, [fetchOrders, fetchStats]);
 
   const handleViewDetail = (order: Order) => {
     setSelectedOrder(order);
     setIsDetailOpen(true);
   };
 
-  const stats = {
-    total: orders.length,
-    completed: orders.filter((o) => o.status === 'completed').length,
-    cancelled: orders.filter((o) => o.status === 'cancelled').length,
-    totalRevenue: orders
-      .filter((o) => o.status === 'completed')
-      .reduce((sum, o) => sum + o.total, 0),
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -109,22 +140,31 @@ export function OrderManagement() {
               </tr>
             </thead>
             <tbody>
-              {filteredOrders.map((order) => (
+              {orders.map((order) => (
                 <tr key={order.id} className="border-b hover:bg-gray-50">
                   <td className="py-3 px-4 font-medium">{order.orderNumber}</td>
                   <td className="py-3 px-4 text-sm text-gray-600">
-                    {format(order.time, 'HH:mm')}
+                    {format(new Date(order.timestamp), 'HH:mm')}
                   </td>
                   <td className="py-3 px-4 text-sm">
-                    {order.items
-                      .map((item) => `${item.name} x${item.quantity}`)
-                      .join(', ')
-                      .slice(0, 30)}
-                    {order.items.length > 1 && '...'}
+                    <div className="space-y-0.5">
+                      {order.items.map((item, idx) => (
+                        <div key={idx}>
+                          <span>{item.name}</span>
+                          {item.addons?.length > 0 && (
+                            <span className="text-xs text-orange-600">
+                              {' '}
+                              {item.addons.map((a) => `+${a.name}`).join(' ')}
+                            </span>
+                          )}
+                          <span className="text-gray-500"> x{item.quantity}</span>
+                        </div>
+                      ))}
+                    </div>
                   </td>
                   <td className="py-3 px-4 text-right">NT$ {order.subtotal}</td>
                   <td className="py-3 px-4 text-right text-red-600">
-                    {order.discount > 0 ? `-NT$ ${order.discount}` : '-'}
+                    {order.discountAmount > 0 ? `-NT$ ${order.discountAmount}` : '-'}
                   </td>
                   <td className="py-3 px-4 text-right font-semibold">NT$ {order.total}</td>
                   <td className="py-3 px-4 text-center">
@@ -153,7 +193,7 @@ export function OrderManagement() {
           </table>
         </div>
 
-        {filteredOrders.length === 0 && (
+        {orders.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">沒有符合條件的訂單</p>
           </div>
@@ -171,7 +211,7 @@ export function OrderManagement() {
               <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
                 <div>
                   <p className="text-sm text-gray-600">訂單時間</p>
-                  <p className="font-medium">{format(selectedOrder.time, 'yyyy/MM/dd HH:mm')}</p>
+                  <p className="font-medium">{format(new Date(selectedOrder.timestamp), 'yyyy/MM/dd HH:mm')}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">付款方式</p>
@@ -196,12 +236,17 @@ export function OrderManagement() {
                 <h4 className="font-semibold mb-3">訂單明細</h4>
                 <div className="space-y-2">
                   {selectedOrder.items.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex-1">
+                    <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between">
                         <p className="font-medium">{item.name}</p>
-                        <p className="text-sm text-gray-600">NT$ {item.price} x {item.quantity}</p>
+                        <p className="font-semibold">NT$ {item.subtotal}</p>
                       </div>
-                      <p className="font-semibold">NT$ {item.subtotal}</p>
+                      <p className="text-sm text-gray-600">NT$ {item.price} x {item.quantity}</p>
+                      {item.addons?.length > 0 && (
+                        <p className="text-xs text-orange-600 mt-1">
+                          {item.addons.map((a) => `+ ${a.name} NT$${a.price}`).join(' / ')}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -216,10 +261,21 @@ export function OrderManagement() {
                   <span>小計</span>
                   <span>NT$ {selectedOrder.subtotal}</span>
                 </div>
-                {selectedOrder.discount > 0 && (
+                {selectedOrder.discountAmount > 0 && (
                   <div className="flex justify-between text-red-600">
-                    <span>優惠折扣</span>
-                    <span>- NT$ {selectedOrder.discount}</span>
+                    <span>
+                      折扣
+                      {selectedOrder.discountType === 'percentage' && selectedOrder.discountValue != null && (
+                        <span className="text-xs text-gray-500 ml-1">（{selectedOrder.discountValue / 10}折）</span>
+                      )}
+                      {selectedOrder.discountType === 'amount' && selectedOrder.discountValue != null && (
+                        <span className="text-xs text-gray-500 ml-1">（折讓 NT${selectedOrder.discountValue}）</span>
+                      )}
+                      {selectedOrder.discountType === 'gift' && (
+                        <span className="text-xs text-gray-500 ml-1">（招待）</span>
+                      )}
+                    </span>
+                    <span>-NT$ {selectedOrder.discountAmount}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-bold pt-2 border-t">

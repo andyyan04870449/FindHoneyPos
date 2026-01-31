@@ -208,6 +208,11 @@ export function DailySettlementDialog({
                           {order.items.slice(0, 2).map((item, idx) => (
                             <div key={idx} className="text-xs">
                               {item.name} x{item.quantity}
+                              {item.addons && item.addons.length > 0 && (
+                                <span className="text-gray-400 ml-1">
+                                  ({item.addons.map(a => a.name).join('、')})
+                                </span>
+                              )}
                             </div>
                           ))}
                           {order.items.length > 2 && (

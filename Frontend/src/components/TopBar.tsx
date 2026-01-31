@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Wifi, WifiOff, Menu, X, Settings, RefreshCw, Database, Calculator } from "lucide-react";
+import { Wifi, WifiOff, Menu, X, Settings, RefreshCw, Database, Calculator, LogOut } from "lucide-react";
 import { SettingsDialog } from "./SettingsDialog";
 import logoImage from 'figma:asset/0823fe84278739e4331a8463c99173e87d691257.png';
 
@@ -18,11 +18,13 @@ interface TopBarProps {
   incentiveTarget: number;
   onIncentiveToggle: (enabled: boolean) => void;
   onIncentiveTargetChange: (target: number) => void;
+  userName?: string;
+  onLogout?: () => void;
 }
 
-export function TopBar({ 
-  isOnline, 
-  menuVersion, 
+export function TopBar({
+  isOnline,
+  menuVersion,
   orderCount,
   deviceId,
   unsyncedCount,
@@ -32,7 +34,9 @@ export function TopBar({
   incentiveEnabled,
   incentiveTarget,
   onIncentiveToggle,
-  onIncentiveTargetChange
+  onIncentiveTargetChange,
+  userName,
+  onLogout,
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -178,6 +182,28 @@ export function TopBar({
             <Calculator className="h-5 w-5 mr-3" />
             日結帳
           </Button>
+
+          {onLogout && (
+            <>
+              <div className="border-t my-2" />
+              {userName && (
+                <div className="px-4 py-2 text-sm text-gray-500">
+                  登入帳號：{userName}
+                </div>
+              )}
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  onLogout();
+                  setMenuOpen(false);
+                }}
+                className="w-full justify-start h-14 text-base text-red-600 hover:bg-red-50 hover:text-red-700"
+              >
+                <LogOut className="h-5 w-5 mr-3" />
+                登出
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

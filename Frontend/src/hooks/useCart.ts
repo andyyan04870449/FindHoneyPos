@@ -1,20 +1,26 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { Product, OrderItem } from '../types';
+import type { Product, OrderItem, SelectedAddon } from '../types';
 import { STORAGE_KEYS } from '../constants';
 import { logger } from '../utils/logger';
 import { toast } from 'sonner@2.0.3';
+import { generateCartItemId, calculateUnitPrice } from '../utils/cartUtils';
 
 export function useCart() {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
 
-  // 載入儲存的購物車
+  // 載入儲存的購物車（含遷移舊資料）
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEYS.CART);
       if (stored) {
-        const cart = JSON.parse(stored);
-        setOrderItems(cart);
-        logger.systemEvent('載入儲存的購物車', { itemCount: cart.length });
+        const cart: OrderItem[] = JSON.parse(stored);
+        // 遷移：若缺少 cartItemId，自動補上
+        const migrated = cart.map(item => ({
+          ...item,
+          cartItemId: item.cartItemId || item.id,
+        }));
+        setOrderItems(migrated);
+        logger.systemEvent('載入儲存的購物車', { itemCount: migrated.length });
       }
     } catch (error) {
       logger.error('載入購物車失敗', error);
@@ -30,42 +36,56 @@ export function useCart() {
     }
   }, [orderItems]);
 
-  const addToOrder = useCallback((product: Product) => {
-    setOrderItems(prev => {
-      const existingItem = prev.find(item => item.id === product.id);
-      if (existingItem) {
-        return prev.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+  const addToOrderWithAddons = useCallback(
+    (product: Product, addons: SelectedAddon[], quantity: number) => {
+      const cartItemId = generateCartItemId(product.id, addons);
+      const unitPrice = calculateUnitPrice(product.price, addons);
+
+      setOrderItems(prev => {
+        const existing = prev.find(item => item.cartItemId === cartItemId);
+        if (existing) {
+          return prev.map(item =>
+            item.cartItemId === cartItemId
+              ? { ...item, quantity: item.quantity + quantity }
+              : item
+          );
+        }
+        return [
+          ...prev,
+          {
+            id: product.id,
+            cartItemId,
+            name: product.name,
+            price: unitPrice,
+            quantity,
+            addons: addons.length > 0 ? addons : undefined,
+          },
+        ];
+      });
+    },
+    []
+  );
+
+  const removeFromOrder = useCallback((cartItemId: string) => {
+    setOrderItems(prev =>
+      prev
+        .map(item =>
+          item.cartItemId === cartItemId
+            ? { ...item, quantity: Math.max(0, item.quantity - 1) }
             : item
-        );
-      } else {
-        return [...prev, { ...product, quantity: 1 }];
-      }
-    });
+        )
+        .filter(item => item.quantity > 0)
+    );
   }, []);
 
-  const removeFromOrder = useCallback((productId: string) => {
-    setOrderItems(prev => {
-      return prev.map(item =>
-        item.id === productId
-          ? { ...item, quantity: Math.max(0, item.quantity - 1) }
-          : item
-      ).filter(item => item.quantity > 0);
-    });
-  }, []);
-
-  const updateQuantity = useCallback((productId: string, quantity: number) => {
+  const updateQuantity = useCallback((cartItemId: string, quantity: number) => {
     if (quantity <= 0) {
-      setOrderItems(prev => prev.filter(item => item.id !== productId));
+      setOrderItems(prev => prev.filter(item => item.cartItemId !== cartItemId));
     } else {
       setOrderItems(prev =>
-        prev.map(item => {
-          if (item.id === productId) {
-            return { ...item, quantity };
-          }
-          return item;
-        })
+        prev.map(item =>
+          item.cartItemId === cartItemId ? { ...item, quantity } : item
+        )
       );
     }
   }, []);
@@ -78,15 +98,20 @@ export function useCart() {
     }
   }, []);
 
-  const getProductQuantity = useCallback((productId: string) => {
-    const item = orderItems.find(item => item.id === productId);
-    return item ? item.quantity : 0;
-  }, [orderItems]);
+  // 加總同商品所有變體的數量
+  const getProductQuantity = useCallback(
+    (productId: string) => {
+      return orderItems
+        .filter(item => item.id === productId)
+        .reduce((sum, item) => sum + item.quantity, 0);
+    },
+    [orderItems]
+  );
 
   return {
     orderItems,
     setOrderItems,
-    addToOrder,
+    addToOrderWithAddons,
     removeFromOrder,
     updateQuantity,
     clearAllItems,

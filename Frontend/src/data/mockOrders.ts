@@ -52,7 +52,7 @@ export function generateMockOrders(): CompletedOrder[] {
         total = Math.round(subtotal * percentage);
       } else if (discountType < 0.8) {
         const fixedAmount = [10, 20, 30, 50][Math.floor(Math.random() * 4)];
-        discount = { type: 'fixed' as const, value: fixedAmount };
+        discount = { type: 'amount' as const, value: fixedAmount };
         total = Math.max(0, subtotal - fixedAmount);
       } else {
         discount = { type: 'gift' as const, value: 100 };

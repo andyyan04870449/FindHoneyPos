@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Calendar, Download, Printer, TrendingUp, TrendingDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Download, Printer, TrendingUp, Loader2 } from 'lucide-react';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
@@ -11,8 +11,6 @@ import {
   SelectValue,
 } from '@/app/components/ui/select';
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   PieChart,
@@ -22,25 +20,66 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import {
-  dailyReportData,
-  hourlySales,
-  categorySales,
-  paymentMethodStats,
-  reportTopProducts,
-} from '@/data/mockData';
+import { api } from '@/lib/api';
 import { PIE_CHART_COLORS } from '@/constants';
+import type { DailyReportData, HourlySales, CategorySales, PaymentMethodStats, TopProduct } from '@/types';
 
 export function DailyReport() {
   const [selectedDate, setSelectedDate] = useState('today');
+  const [loading, setLoading] = useState(true);
+  const [reportData, setReportData] = useState<DailyReportData | null>(null);
+  const [hourlySales, setHourlySales] = useState<HourlySales[]>([]);
+  const [categorySales, setCategorySales] = useState<CategorySales[]>([]);
+  const [paymentMethodStats, setPaymentMethodStats] = useState<PaymentMethodStats[]>([]);
+  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
 
-  const handleExport = () => {
-    toast.success('報表匯出成功');
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const dateParam = `?date=${selectedDate}`;
+        const [daily, hourly, category, payment, top] = await Promise.all([
+          api<DailyReportData>(`/api/admin/reports/daily${dateParam}`),
+          api<HourlySales[]>(`/api/admin/reports/hourly-sales${dateParam}`),
+          api<CategorySales[]>(`/api/admin/reports/category-sales${dateParam}`),
+          api<PaymentMethodStats[]>(`/api/admin/reports/payment-methods${dateParam}`),
+          api<TopProduct[]>(`/api/admin/reports/top-products${dateParam}`),
+        ]);
+        setReportData({ ...daily, date: new Date(daily.date) });
+        setHourlySales(hourly);
+        setCategorySales(category);
+        setPaymentMethodStats(payment);
+        setTopProducts(top);
+      } catch (err) {
+        console.error('Failed to fetch report data:', err);
+        toast.error('載入報表失敗');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [selectedDate]);
+
+  const handleExport = async () => {
+    try {
+      const res = await fetch(`/api/admin/reports/export?date=${selectedDate}&format=csv`);
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `report-${selectedDate}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('報表匯出成功');
+    } catch (err) {
+      console.error('Failed to export report:', err);
+      toast.error('匯出報表失敗');
+    }
   };
 
   const handlePrint = () => {
@@ -48,13 +87,29 @@ export function DailyReport() {
     toast.success('準備列印報表');
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+      </div>
+    );
+  }
+
+  if (!reportData) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-500">無法載入報表資料，請確認 API 服務是否啟動</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">日結報表</h2>
           <p className="text-gray-600 mt-1">
-            {format(dailyReportData.date, 'yyyy年M月d日')} 星期{format(dailyReportData.date, 'EEEE')}
+            {format(reportData.date, 'yyyy年M月d日')} 星期{format(reportData.date, 'EEEE')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -89,10 +144,10 @@ export function DailyReport() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">訂單總數</p>
-              <p className="text-3xl font-bold mt-2">{dailyReportData.orderCount}</p>
+              <p className="text-3xl font-bold mt-2">{reportData.orderCount}</p>
               <div className="flex items-center gap-1 mt-2 text-sm text-green-600">
                 <TrendingUp className="h-4 w-4" />
-                <span>+{dailyReportData.comparisonYesterday.orders}%</span>
+                <span>+{reportData.comparisonYesterday.orders}%</span>
               </div>
             </div>
           </div>
@@ -103,11 +158,11 @@ export function DailyReport() {
             <div>
               <p className="text-sm text-gray-600">總營業額</p>
               <p className="text-3xl font-bold mt-2 text-orange-600">
-                NT$ {dailyReportData.totalRevenue.toLocaleString()}
+                NT$ {reportData.totalRevenue.toLocaleString()}
               </p>
               <div className="flex items-center gap-1 mt-2 text-sm text-green-600">
                 <TrendingUp className="h-4 w-4" />
-                <span>+{dailyReportData.comparisonYesterday.revenue}%</span>
+                <span>+{reportData.comparisonYesterday.revenue}%</span>
               </div>
             </div>
           </div>
@@ -117,10 +172,10 @@ export function DailyReport() {
           <div>
             <p className="text-sm text-gray-600">折扣優惠</p>
             <p className="text-3xl font-bold mt-2 text-red-600">
-              -NT$ {dailyReportData.totalDiscount.toLocaleString()}
+              -NT$ {reportData.totalDiscount.toLocaleString()}
             </p>
             <p className="text-sm text-gray-500 mt-2">
-              佔營業額 {((dailyReportData.totalDiscount / dailyReportData.totalRevenue) * 100).toFixed(1)}%
+              佔營業額 {((reportData.totalDiscount / reportData.totalRevenue) * 100).toFixed(1)}%
             </p>
           </div>
         </Card>
@@ -129,10 +184,10 @@ export function DailyReport() {
           <div>
             <p className="text-sm text-gray-600">平均客單價</p>
             <p className="text-3xl font-bold mt-2">
-              NT$ {dailyReportData.averageOrderValue}
+              NT$ {reportData.averageOrderValue}
             </p>
             <p className="text-sm text-gray-500 mt-2">
-              已售商品數：{dailyReportData.stockSold}
+              已售商品數：{reportData.stockSold}
             </p>
           </div>
         </Card>
@@ -219,7 +274,7 @@ export function DailyReport() {
               </tr>
             </thead>
             <tbody>
-              {reportTopProducts.map((product, index) => (
+              {topProducts.map((product, index) => (
                 <tr key={product.name} className="border-b hover:bg-gray-50">
                   <td className="py-3 px-4">
                     <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold">
@@ -244,20 +299,20 @@ export function DailyReport() {
           <div className="flex justify-between items-center">
             <span className="text-gray-700">營業額小計</span>
             <span className="font-semibold">
-              NT$ {dailyReportData.totalRevenue.toLocaleString()}
+              NT$ {reportData.totalRevenue.toLocaleString()}
             </span>
           </div>
           <div className="flex justify-between items-center text-red-600">
             <span>優惠折扣</span>
             <span className="font-semibold">
-              -NT$ {dailyReportData.totalDiscount.toLocaleString()}
+              -NT$ {reportData.totalDiscount.toLocaleString()}
             </span>
           </div>
           <div className="border-t pt-3">
             <div className="flex justify-between items-center">
               <span className="text-xl font-bold">實收現金</span>
               <span className="text-2xl font-bold text-orange-600">
-                NT$ {dailyReportData.netRevenue.toLocaleString()}
+                NT$ {reportData.netRevenue.toLocaleString()}
               </span>
             </div>
           </div>

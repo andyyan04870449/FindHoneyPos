@@ -1,39 +1,30 @@
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Star } from "lucide-react";
-import { logger } from "../utils/logger";
 
 interface ProductCardProps {
   name: string;
   price: number;
   quantity: number;
   isPopular?: boolean;
-  onIncrease: () => void;
-  onDecrease: () => void;
+  onClick: () => void;
 }
 
-export function ProductCard({ 
-  name, 
-  price, 
-  quantity, 
-  isPopular, 
-  onIncrease, 
-  onDecrease 
+export function ProductCard({
+  name,
+  price,
+  quantity,
+  isPopular,
+  onClick,
 }: ProductCardProps) {
-  
-  const handleCardClick = () => {
-    onIncrease();
-    logger.userAction('加入購物車', { productName: name, newQuantity: quantity + 1 });
-  };
-
   return (
-    <Card 
-      onClick={handleCardClick}
+    <Card
+      onClick={onClick}
       className={`
         relative p-6 h-36 cursor-pointer transition-all duration-150
         bg-white border-2 overflow-visible
-        ${quantity > 0 
-          ? 'border-brand-orange shadow-lg bg-orange-50/30' 
+        ${quantity > 0
+          ? 'border-brand-orange shadow-lg bg-orange-50/30'
           : 'border-gray-200 hover:border-brand-orange/50'
         }
         active:scale-[0.98] active:shadow-sm

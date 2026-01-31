@@ -5,23 +5,40 @@ export interface Product {
   isPopular?: boolean;
 }
 
-export interface OrderItem {
+export interface Addon {
   id: string;
   name: string;
   price: number;
-  quantity: number;
 }
+
+export interface SelectedAddon {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface OrderItem {
+  id: string;
+  cartItemId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  addons?: SelectedAddon[];
+}
+
+export type DiscountType = 'percentage' | 'amount' | 'gift';
 
 export interface CompletedOrder {
   id: string;
   timestamp: Date;
-  items: { name: string; quantity: number; price: number }[];
+  items: { name: string; quantity: number; price: number; addons?: SelectedAddon[] }[];
   subtotal: number;
   discount?: {
-    type: 'percentage' | 'fixed' | 'gift';
+    type: DiscountType;
     value: number;
   };
   total: number;
+  synced?: boolean;
 }
 
 export interface DiscountInfo {
@@ -31,9 +48,17 @@ export interface DiscountInfo {
   originalTotal: number;
   discountAmount: number;
   finalTotal: number;
+  customerTag?: string;
 }
 
-export type DiscountType = 'percentage' | 'amount' | 'free';
+export interface PosDiscount {
+  id: string;
+  name: string;
+  type: DiscountType;
+  value: number;
+  minPurchase: number;
+  description?: string;
+}
 
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 
@@ -45,3 +70,79 @@ export interface LogEntry {
 }
 
 export type InventoryData = Record<string, number>;
+
+// --- API 相關型別 ---
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+}
+
+export interface CreateOrderRequest {
+  deviceId: string;
+  items: {
+    productId: number;
+    productName: string;
+    price: number;
+    quantity: number;
+    addons?: { productId: number; productName: string; price: number }[];
+  }[];
+  discountType?: string;
+  discountValue?: number;
+  discountAmount?: number;
+  customerTag?: string;
+}
+
+export interface CreateOrderResponse {
+  orderId: string;
+  orderNumber: number;
+}
+
+export interface BatchSyncResponse {
+  syncedCount: number;
+  failedCount: number;
+}
+
+export interface SubmitSettlementRequest {
+  deviceId: string;
+  date: string;
+  inventory: InventoryData;
+  totalOrders: number;
+  totalRevenue: number;
+  totalDiscount: number;
+}
+
+export interface SettlementResponse {
+  settlementId: string;
+}
+
+export interface SyncStatusResponse {
+  pendingCount: number;
+  lastSyncTime?: string;
+}
+
+export interface PendingOrder {
+  localId: string;
+  request: CreateOrderRequest;
+  createdAt: string;
+}
+
+// Auth Types
+export interface AuthUser {
+  id: number;
+  username: string;
+  displayName: string;
+  isActive: boolean;
+  createdAt: string;
+  lastLoginAt?: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: AuthUser;
+}
+
+export interface SystemStatus {
+  initialized: boolean;
+}

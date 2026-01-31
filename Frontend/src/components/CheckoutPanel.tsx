@@ -4,26 +4,32 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Separator } from "./ui/separator";
 import { Badge } from "./ui/badge";
-import { X, Percent, DollarSign, Gift } from "lucide-react";
-import type { OrderItem, DiscountInfo, DiscountType } from '../types';
-import { QUICK_DISCOUNT_PERCENTAGES, QUICK_DISCOUNT_AMOUNTS } from '../constants';
+import { X, Percent, DollarSign, Gift, Users } from "lucide-react";
+import type { OrderItem, DiscountInfo, DiscountType, PosDiscount } from '../types';
+
+const GENDER_TAGS = ['男', '女'] as const;
+const AGE_TAGS = ['成人', '學生'] as const;
 
 interface CheckoutPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   items: OrderItem[];
+  discounts: PosDiscount[];
   onConfirmCheckout: (discountInfo: DiscountInfo) => void;
 }
 
-export function CheckoutPanel({ 
-  open, 
-  onOpenChange, 
+export function CheckoutPanel({
+  open,
+  onOpenChange,
   items,
-  onConfirmCheckout 
+  discounts,
+  onConfirmCheckout
 }: CheckoutPanelProps) {
   const [discountType, setDiscountType] = useState<DiscountType>('percentage');
   const [customPercentage, setCustomPercentage] = useState('');
   const [customAmount, setCustomAmount] = useState('');
+  const [genderTag, setGenderTag] = useState('');
+  const [ageTag, setAgeTag] = useState('');
 
   // 計算原始總金額
   const originalTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -49,27 +55,28 @@ export function CheckoutPanel({
           label = `折扣 NT$ ${discountAmount}`;
         }
       }
-    } else if (discountType === 'free') {
+    } else if (discountType === 'gift') {
       discountAmount = originalTotal;
       label = '整單贈送';
     }
 
     return {
       type: discountType,
-      value: discountType === 'percentage' 
-        ? parseFloat(customPercentage) || 0 
+      value: discountType === 'percentage'
+        ? parseFloat(customPercentage) || 0
         : parseFloat(customAmount) || 0,
       label,
       originalTotal,
       discountAmount,
-      finalTotal: Math.max(0, originalTotal - discountAmount)
+      finalTotal: Math.max(0, originalTotal - discountAmount),
+      customerTag: [genderTag, ageTag].filter(Boolean).join(',') || undefined,
     };
   };
 
   const discount = calculateDiscount();
 
-  const quickDiscountButtons = QUICK_DISCOUNT_PERCENTAGES;
-  const quickAmountButtons = QUICK_DISCOUNT_AMOUNTS;
+  const quickDiscountButtons = discounts.filter(d => d.type === 'percentage');
+  const quickAmountButtons = discounts.filter(d => d.type === 'amount');
 
   const handleQuickPercentage = (percentage: number) => {
     setCustomPercentage(percentage.toString());
@@ -86,6 +93,8 @@ export function CheckoutPanel({
     setCustomPercentage('');
     setCustomAmount('');
     setDiscountType('percentage');
+    setGenderTag('');
+    setAgeTag('');
   };
 
   const handleCancel = () => {
@@ -94,6 +103,8 @@ export function CheckoutPanel({
     setCustomPercentage('');
     setCustomAmount('');
     setDiscountType('percentage');
+    setGenderTag('');
+    setAgeTag('');
   };
 
   return (
@@ -110,9 +121,18 @@ export function CheckoutPanel({
             <div className="bg-gray-50 rounded-xl p-6 flex-1 flex flex-col overflow-hidden">
               <div className="flex-1 overflow-y-auto space-y-3 mb-4">
                 {items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between py-4 px-4 bg-white rounded-lg">
+                  <div key={item.cartItemId} className="flex items-center justify-between py-4 px-4 bg-white rounded-lg">
                     <div className="flex-1 min-w-0">
                       <span className="font-medium text-gray-900 truncate block text-xl">{item.name}</span>
+                      {item.addons && item.addons.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {item.addons.map(addon => (
+                            <Badge key={addon.id} variant="secondary" className="text-xs">
+                              {addon.name} +{addon.price}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-8 text-lg shrink-0">
                       <span className="text-gray-600 w-28 text-right">NT$ {item.price}</span>
@@ -182,18 +202,18 @@ export function CheckoutPanel({
                 </button>
 
                 <button
-                  onClick={() => setDiscountType('free')}
+                  onClick={() => setDiscountType('gift')}
                   className={`flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all active:scale-95 ${
-                    discountType === 'free'
+                    discountType === 'gift'
                       ? 'border-brand-orange bg-orange-50'
                       : 'border-gray-200 bg-white hover:border-gray-300'
                   }`}
                 >
                   <Gift className={`h-8 w-8 ${
-                    discountType === 'free' ? 'text-brand-orange' : 'text-gray-600'
+                    discountType === 'gift' ? 'text-brand-orange' : 'text-gray-600'
                   }`} />
                   <span className={`text-lg font-medium ${
-                    discountType === 'free' ? 'text-brand-orange' : 'text-gray-700'
+                    discountType === 'gift' ? 'text-brand-orange' : 'text-gray-700'
                   }`}>
                     整單贈送
                   </span>
@@ -207,10 +227,11 @@ export function CheckoutPanel({
               {discountType === 'percentage' && (
                 <div>
                   <h4 className="text-xl font-medium mb-3">選擇折扣</h4>
+                  {quickDiscountButtons.length > 0 && (
                   <div className="grid grid-cols-4 gap-3 mb-4">
                     {quickDiscountButtons.map((btn) => (
                       <Button
-                        key={btn.label}
+                        key={btn.id}
                         variant="outline"
                         onClick={() => handleQuickPercentage(btn.value)}
                         className={`h-14 text-lg ${
@@ -219,10 +240,11 @@ export function CheckoutPanel({
                             : ''
                         }`}
                       >
-                        {btn.label}
+                        {btn.name}
                       </Button>
                     ))}
                   </div>
+                  )}
                   <div className="space-y-2">
                     <label className="text-base text-gray-600">自訂折扣（%）</label>
                     <Input
@@ -242,10 +264,11 @@ export function CheckoutPanel({
               {discountType === 'amount' && (
                 <div>
                   <h4 className="text-xl font-medium mb-3">選擇折扣金額</h4>
+                  {quickAmountButtons.length > 0 && (
                   <div className="grid grid-cols-4 gap-3 mb-4">
                     {quickAmountButtons.map((btn) => (
                       <Button
-                        key={btn.label}
+                        key={btn.id}
                         variant="outline"
                         onClick={() => handleQuickAmount(btn.value)}
                         className={`h-14 text-lg ${
@@ -254,10 +277,11 @@ export function CheckoutPanel({
                             : ''
                         }`}
                       >
-                        {btn.label}
+                        {btn.name}
                       </Button>
                     ))}
                   </div>
+                  )}
                   <div className="space-y-2">
                     <label className="text-base text-gray-600">自訂折扣金額（NT$）</label>
                     <Input
@@ -273,7 +297,7 @@ export function CheckoutPanel({
               )}
 
               {/* 整單贈送說明 */}
-              {discountType === 'free' && (
+              {discountType === 'gift' && (
                 <div className="bg-green-50 border-2 border-green-200 rounded-xl p-5">
                   <div className="flex items-center gap-3 mb-2">
                     <Gift className="h-6 w-6 text-green-600" />
@@ -313,6 +337,43 @@ export function CheckoutPanel({
                 <span className="text-5xl font-bold text-brand-orange">
                   NT$ {discount.finalTotal}
                 </span>
+              </div>
+            </div>
+
+            {/* 客群分析 */}
+            <div className="mb-5">
+              <h4 className="text-xl font-medium mb-3">客群分析</h4>
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  {GENDER_TAGS.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => setGenderTag(prev => prev === tag ? '' : tag)}
+                      className={`flex-1 h-16 rounded-xl border-2 text-xl font-medium transition-all active:scale-95 ${
+                        genderTag === tag
+                          ? 'border-brand-orange bg-orange-50 text-brand-orange'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-3">
+                  {AGE_TAGS.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => setAgeTag(prev => prev === tag ? '' : tag)}
+                      className={`flex-1 h-16 rounded-xl border-2 text-xl font-medium transition-all active:scale-95 ${
+                        ageTag === tag
+                          ? 'border-brand-orange bg-orange-50 text-brand-orange'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 

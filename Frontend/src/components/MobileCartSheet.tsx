@@ -11,20 +11,22 @@ interface MobileCartSheetProps {
   onUpdateQuantity: (id: string, quantity: number) => void;
   onClearAll: () => void;
   onOpenCheckout: () => void;
+  onCustomize?: (item: OrderItem) => void;
 }
 
 export function MobileCartSheet({
   items,
   onUpdateQuantity,
   onClearAll,
-  onOpenCheckout
+  onOpenCheckout,
+  onCustomize,
 }: MobileCartSheetProps) {
   const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   const handleQuantityChange = (item: OrderItem, delta: number) => {
     const newQuantity = Math.max(0, item.quantity + delta);
-    onUpdateQuantity(item.id, newQuantity);
+    onUpdateQuantity(item.cartItemId, newQuantity);
   };
 
   return (
@@ -65,11 +67,13 @@ export function MobileCartSheet({
                 <p className="text-base">點擊商品來加入購物車</p>
               </div>
             ) : (
-              items.map((item) => (
+              items.map((item, idx) => (
                 <CartItemRow
-                  key={item.id}
+                  key={item.cartItemId}
                   item={item}
+                  index={idx + 1}
                   onQuantityChange={handleQuantityChange}
+                  onCustomize={onCustomize}
                   variant="mobile"
                 />
               ))

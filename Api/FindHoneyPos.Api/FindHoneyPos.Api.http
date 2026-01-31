@@ -1,0 +1,6 @@
+@FindHoneyPos.Api_HostAddress = http://localhost:5113
+
+GET {{FindHoneyPos.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

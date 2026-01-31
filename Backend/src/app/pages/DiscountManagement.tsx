@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Pencil, Trash2, Percent, DollarSign, Gift } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Pencil, Trash2, Percent, DollarSign, Gift, Loader2 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
@@ -23,7 +23,7 @@ import {
 import { Switch } from '@/app/components/ui/switch';
 import { toast } from 'sonner';
 import type { Discount } from '@/types';
-import { mockDiscounts } from '@/data/mockData';
+import { api } from '@/lib/api';
 import { DISCOUNT_TYPE_LABELS, DISCOUNT_TYPE_COLORS } from '@/constants';
 
 const discountTypeIcons: Record<string, typeof Percent> = {
@@ -33,9 +33,10 @@ const discountTypeIcons: Record<string, typeof Percent> = {
 };
 
 export function DiscountManagement() {
-  const [discounts, setDiscounts] = useState<Discount[]>(mockDiscounts);
+  const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState<Discount | null>(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     type: 'percentage' as 'percentage' | 'amount' | 'gift',
@@ -43,6 +44,22 @@ export function DiscountManagement() {
     minPurchase: '',
     description: '',
   });
+
+  const fetchDiscounts = useCallback(async () => {
+    try {
+      const data = await api<Discount[]>('/api/admin/discounts');
+      setDiscounts(data);
+    } catch (err) {
+      console.error('Failed to fetch discounts:', err);
+      toast.error('載入折扣失敗');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDiscounts();
+  }, [fetchDiscounts]);
 
   const handleAddDiscount = () => {
     setEditingDiscount(null);
@@ -68,58 +85,63 @@ export function DiscountManagement() {
     setIsDialogOpen(true);
   };
 
-  const handleDeleteDiscount = (discountId: string) => {
-    setDiscounts(discounts.filter((d) => d.id !== discountId));
-    toast.success('折扣已刪除');
+  const handleDeleteDiscount = async (discountId: string) => {
+    try {
+      await api(`/api/admin/discounts/${discountId}`, { method: 'DELETE' });
+      toast.success('折扣已刪除');
+      fetchDiscounts();
+    } catch (err) {
+      console.error('Failed to delete discount:', err);
+      toast.error('刪除折扣失敗');
+    }
   };
 
-  const handleToggleActive = (discountId: string) => {
-    setDiscounts(
-      discounts.map((d) =>
-        d.id === discountId ? { ...d, isActive: !d.isActive } : d
-      )
-    );
-    const discount = discounts.find((d) => d.id === discountId);
-    toast.success(discount?.isActive ? '折扣已停用' : '折扣已啟用');
+  const handleToggleActive = async (discountId: string) => {
+    try {
+      await api(`/api/admin/discounts/${discountId}/toggle`, { method: 'PATCH' });
+      const discount = discounts.find((d) => d.id === discountId);
+      toast.success(discount?.isActive ? '折扣已停用' : '折扣已啟用');
+      fetchDiscounts();
+    } catch (err) {
+      console.error('Failed to toggle discount:', err);
+      toast.error('更新折扣狀態失敗');
+    }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.name || !formData.value) {
       toast.error('請填寫必填欄位');
       return;
     }
 
-    if (editingDiscount) {
-      setDiscounts(
-        discounts.map((d) =>
-          d.id === editingDiscount.id
-            ? {
-                ...d,
-                name: formData.name,
-                type: formData.type,
-                value: parseFloat(formData.value),
-                minPurchase: parseFloat(formData.minPurchase) || 0,
-                description: formData.description,
-              }
-            : d
-        )
-      );
-      toast.success('折扣已更新');
-    } else {
-      const newDiscount: Discount = {
-        id: Date.now().toString(),
-        name: formData.name,
-        type: formData.type,
-        value: parseFloat(formData.value),
-        minPurchase: parseFloat(formData.minPurchase) || 0,
-        isActive: true,
-        description: formData.description,
-      };
-      setDiscounts([...discounts, newDiscount]);
-      toast.success('折扣已新增');
-    }
+    const payload = {
+      name: formData.name,
+      type: formData.type,
+      value: parseFloat(formData.value),
+      minPurchase: parseFloat(formData.minPurchase) || 0,
+      description: formData.description,
+    };
 
-    setIsDialogOpen(false);
+    try {
+      if (editingDiscount) {
+        await api(`/api/admin/discounts/${editingDiscount.id}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload),
+        });
+        toast.success('折扣已更新');
+      } else {
+        await api('/api/admin/discounts', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        toast.success('折扣已新增');
+      }
+      setIsDialogOpen(false);
+      fetchDiscounts();
+    } catch (err) {
+      console.error('Failed to save discount:', err);
+      toast.error('儲存折扣失敗');
+    }
   };
 
   const getDiscountDisplay = (discount: Discount) => {
@@ -131,6 +153,14 @@ export function DiscountManagement() {
       return `贈送${discount.value}件`;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
