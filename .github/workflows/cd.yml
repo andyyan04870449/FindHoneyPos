@@ -32,6 +32,36 @@ jobs:
           npm ci
           npm run build
 
+      # Ensure PostgreSQL is running
+      - name: Ensure PostgreSQL
+        run: |
+          pg_isready -q && echo "PostgreSQL already running" && exit 0
+          launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.postgresql@14.plist 2>/dev/null || true
+          launchctl load ~/Library/LaunchAgents/homebrew.mxcl.postgresql@14.plist
+          for i in 1 2 3 4 5; do
+            pg_isready -q && echo "PostgreSQL started" && exit 0
+            sleep 2
+          done
+          echo "PostgreSQL failed to start"
+          exit 1
+
+      # Build and start .NET API server
+      - name: Ensure API server
+        run: |
+          # Rebuild to pick up any code changes
+          dotnet build Api/FindHoneyPos.Api/FindHoneyPos.Api.csproj -c Release --nologo -v q
+          # Restart via launchd
+          launchctl unload ~/Library/LaunchAgents/com.findhoneypos.api.plist 2>/dev/null || true
+          sleep 2
+          launchctl load ~/Library/LaunchAgents/com.findhoneypos.api.plist
+          # Wait for API to be ready
+          for i in 1 2 3 4 5 6; do
+            curl -sf http://localhost:5001/api/auth/status > /dev/null && echo "API server ready" && exit 0
+            sleep 5
+          done
+          echo "API server failed to start"
+          exit 1
+
       # Docker build and deploy
       - name: Unlock macOS Keychain
         run: security unlock-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" ~/Library/Keychains/login.keychain-db
@@ -72,13 +102,19 @@ jobs:
           sleep 2
           launchctl load ~/Library/LaunchAgents/com.ngrok.agent.plist
           sleep 5
-          # Verify tunnels are up
           TUNNEL_COUNT=$(curl -s http://127.0.0.1:4040/api/tunnels | python3 -c "import sys,json; print(len(json.load(sys.stdin)['tunnels']))")
           echo "Active tunnels: $TUNNEL_COUNT"
           if [ "$TUNNEL_COUNT" -lt 1 ]; then
             echo "ngrok failed to start tunnels"
             exit 1
           fi
+
+      # Verify full stack through ngrok
+      - name: Verify external access
+        run: |
+          curl -sf https://findhoneypos-frontend.ngrok.app/ > /dev/null && echo "Frontend ngrok OK"
+          curl -sf https://findhoneypos-backend.ngrok.app/ > /dev/null && echo "Backend ngrok OK"
+          curl -sf https://findhoneypos-frontend.ngrok.app/api/auth/status > /dev/null && echo "API proxy OK"
 
       # Cleanup
       - name: Prune unused images
