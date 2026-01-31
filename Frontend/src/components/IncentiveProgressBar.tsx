@@ -8,9 +8,6 @@ interface IncentiveProgressBarProps {
 }
 
 export function IncentiveProgressBar({ current, target, isEnabled }: IncentiveProgressBarProps) {
-  // 暫時移除條件，確保組件總是顯示用於調試
-  // if (!isEnabled) return null;
-
   const progress = Math.min((current / target) * 100, 100);
   const isCompleted = current >= target;
 
