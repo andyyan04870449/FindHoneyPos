@@ -33,16 +33,19 @@ jobs:
           npm run build
 
       # Docker build and deploy
-      - name: Configure Docker credentials
+      - name: Fix Docker credential store for non-interactive session
         run: |
-          mkdir -p /tmp/docker-cd
-          echo '{"credsStore":"","currentContext":"desktop-linux"}' > /tmp/docker-cd/config.json
+          # Replace "desktop" credsStore with empty string to avoid Keychain access
+          sed -i.bak 's/"credsStore":.*"desktop"/"credsStore": ""/' ~/.docker/config.json
 
       - name: Build Docker images
         timeout-minutes: 10
-        env:
-          DOCKER_CONFIG: /tmp/docker-cd
         run: docker compose build
+
+      - name: Restore Docker config
+        if: always()
+        run: |
+          [ -f ~/.docker/config.json.bak ] && mv ~/.docker/config.json.bak ~/.docker/config.json || true
 
       - name: Stop existing containers
         run: docker compose down --timeout 30
