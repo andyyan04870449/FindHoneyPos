@@ -3,7 +3,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Wifi, WifiOff, Menu, X, Settings, RefreshCw, Database, Calculator, LogOut } from "lucide-react";
 import { SettingsDialog } from "./SettingsDialog";
-import logoImage from 'figma:asset/0823fe84278739e4331a8463c99173e87d691257.png';
+import logoImage from '@/assets/0823fe84278739e4331a8463c99173e87d691257.png';
 
 interface TopBarProps {
   isOnline: boolean;

@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import type { CompletedOrder, DiscountInfo, OrderItem, CreateOrderRequest } from '../types';
 import { INITIAL_ORDER_COUNT } from '../constants';
 import { logger } from '../utils/logger';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { posApi } from '../services/api';
 import { orderQueue } from '../services/orderQueue';
 

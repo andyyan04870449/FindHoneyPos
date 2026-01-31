@@ -7,6 +7,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: self-hosted
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -18,7 +19,7 @@ jobs:
             Frontend/package-lock.json
             Backend/package-lock.json
 
-      # Build verification
+      # Build verification (fast-fail before Docker)
       - name: Build Frontend
         working-directory: Frontend
         run: |
@@ -31,22 +32,35 @@ jobs:
           npm ci
           npm run build
 
-      # Docker build and rolling deploy
+      # Docker build and deploy
       - name: Build Docker images
+        timeout-minutes: 10
         run: docker compose build
 
-      - name: Deploy Frontend
-        run: docker compose up -d --no-deps --wait frontend
+      - name: Stop existing containers
+        run: docker compose down --timeout 30
 
-      - name: Deploy Backend
-        run: docker compose up -d --no-deps --wait backend
+      - name: Start containers
+        run: docker compose up -d --wait --wait-timeout 60
 
-      # Health checks
+      # Health checks with retry
       - name: Verify Frontend
-        run: curl -f http://localhost:3000/
+        run: |
+          for i in 1 2 3 4 5; do
+            curl -f http://localhost:3000/ && exit 0
+            sleep 3
+          done
+          echo "Frontend health check failed"
+          exit 1
 
       - name: Verify Backend
-        run: curl -f http://localhost:3001/
+        run: |
+          for i in 1 2 3 4 5; do
+            curl -f http://localhost:3001/ && exit 0
+            sleep 3
+          done
+          echo "Backend health check failed"
+          exit 1
 
       # Cleanup
       - name: Prune unused images

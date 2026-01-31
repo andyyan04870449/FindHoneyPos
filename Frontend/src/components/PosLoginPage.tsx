@@ -3,8 +3,8 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card } from './ui/card';
-import { toast } from 'sonner@2.0.3';
-import logoImage from 'figma:asset/0823fe84278739e4331a8463c99173e87d691257.png';
+import { toast } from 'sonner';
+import logoImage from '@/assets/0823fe84278739e4331a8463c99173e87d691257.png';
 
 interface PosLoginPageProps {
   isInitialized: boolean;

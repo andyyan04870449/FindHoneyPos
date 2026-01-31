@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import type { Product, OrderItem, SelectedAddon } from '../types';
 import { STORAGE_KEYS } from '../constants';
 import { logger } from '../utils/logger';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { generateCartItemId, calculateUnitPrice } from '../utils/cartUtils';
 
 export function useCart() {

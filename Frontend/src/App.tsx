@@ -10,7 +10,7 @@ import { InventoryCountDialog } from "./components/InventoryCountDialog";
 import { ProductCustomizeDialog } from "./components/ProductCustomizeDialog";
 import { PosLoginPage } from "./components/PosLoginPage";
 import { Toaster } from "./components/ui/sonner";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 import { useOnlineStatus } from "./hooks/useOnlineStatus";
 import { useCart } from "./hooks/useCart";
 import { useOrders } from "./hooks/useOrders";
