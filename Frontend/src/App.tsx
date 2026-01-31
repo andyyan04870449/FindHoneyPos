@@ -21,7 +21,7 @@ import { useDiscounts } from "./hooks/useDiscounts";
 import { useAuth } from "./hooks/useAuth";
 import { logger } from "./utils/logger";
 import { generateDeviceId } from "./utils/deviceId";
-import { posApi } from "./services/api";
+import { posApi, ApiError } from "./services/api";
 import { orderQueue } from "./services/orderQueue";
 import { MENU_VERSION } from "./constants";
 import type { InventoryData, Product, SelectedAddon, OrderItem } from "./types";
@@ -73,9 +73,7 @@ export default function App() {
 
   const {
     incentiveEnabled,
-    setIncentiveEnabled,
     incentiveTarget,
-    setIncentiveTarget,
   } = useIncentive();
 
   const todayItemsSold = calculateTodayItemsSold();
@@ -104,11 +102,20 @@ export default function App() {
         );
       })
       .catch((err) => {
-        // 同步失敗，將訂單放回佇列
-        pending.forEach((p) => orderQueue.enqueue(p.request));
-        setUnsyncedCount(orderQueue.getCount());
-        toast.error('同步失敗，將稍後重試');
-        logger.error('自動同步失敗', { error: String(err) });
+        const isClientError = err instanceof ApiError && err.status >= 400 && err.status < 500;
+        if (isClientError) {
+          // 4xx 資料有問題，丟棄不重試
+          orderQueue.clear();
+          setUnsyncedCount(0);
+          toast.error('離線訂單資料異常，已清除');
+          logger.error('自動同步失敗（資料異常已丟棄）', { error: String(err), count: pending.length });
+        } else {
+          // 5xx 或網路錯誤，放回佇列稍後重試
+          pending.forEach((p) => orderQueue.enqueue(p.request));
+          setUnsyncedCount(orderQueue.getCount());
+          toast.error('同步失敗，將稍後重試');
+          logger.error('自動同步失敗', { error: String(err) });
+        }
       })
       .finally(() => {
         syncingRef.current = false;
@@ -200,10 +207,18 @@ export default function App() {
         );
       })
       .catch((err) => {
-        pending.forEach((p) => orderQueue.enqueue(p.request));
-        setUnsyncedCount(orderQueue.getCount());
-        toast.error("資料同步失敗");
-        logger.error('手動同步失敗', { error: String(err) });
+        const isClientError = err instanceof ApiError && err.status >= 400 && err.status < 500;
+        if (isClientError) {
+          orderQueue.clear();
+          setUnsyncedCount(0);
+          toast.error('離線訂單資料異常，已清除');
+          logger.error('手動同步失敗（資料異常已丟棄）', { error: String(err), count: pending.length });
+        } else {
+          pending.forEach((p) => orderQueue.enqueue(p.request));
+          setUnsyncedCount(orderQueue.getCount());
+          toast.error("資料同步失敗");
+          logger.error('手動同步失敗', { error: String(err) });
+        }
       });
   }, [isOnline, setCompletedOrders]);
 
@@ -239,6 +254,12 @@ export default function App() {
         0
       );
 
+      // 計算激勵資料
+      const itemsSold = todayOrders
+        .filter(o => o.total > 0)
+        .reduce((total, o) => total + o.items.reduce((sum, item) => sum + item.quantity, 0), 0);
+      const achieved = incentiveEnabled && incentiveTarget > 0 && itemsSold >= incentiveTarget;
+
       if (isOnline) {
         toast.loading("正在提交日結帳...");
         try {
@@ -249,6 +270,9 @@ export default function App() {
             totalOrders: todayOrders.length,
             totalRevenue,
             totalDiscount,
+            incentiveTarget: incentiveEnabled ? incentiveTarget : 0,
+            incentiveItemsSold: itemsSold,
+            incentiveAchieved: achieved,
           });
           toast.dismiss();
           toast.success("日結帳已完成並記錄！");
@@ -263,7 +287,7 @@ export default function App() {
         logger.userAction('日結帳離線暫存', { inventory });
       }
     },
-    [completedOrders, isOnline, deviceId]
+    [completedOrders, isOnline, deviceId, incentiveEnabled, incentiveTarget]
   );
 
   // Auth loading state
@@ -301,10 +325,6 @@ export default function App() {
         onUpdateMenu={handleUpdateMenu}
         onSyncData={handleSyncData}
         onOpenSettlement={() => setInventoryCountOpen(true)}
-        incentiveEnabled={incentiveEnabled}
-        incentiveTarget={incentiveTarget}
-        onIncentiveToggle={setIncentiveEnabled}
-        onIncentiveTargetChange={setIncentiveTarget}
         userName={user?.displayName}
         onLogout={logout}
       />

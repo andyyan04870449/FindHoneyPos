@@ -2,7 +2,10 @@ namespace FindHoneyPos.Api.DTOs;
 
 public record SubmitSettlementRequest(
     string? DeviceId,
-    Dictionary<int, int> InventoryCounts
+    Dictionary<int, int> InventoryCounts,
+    int? IncentiveTarget,
+    int? IncentiveItemsSold,
+    bool? IncentiveAchieved
 );
 
 public record SettlementResponse(
@@ -13,5 +16,8 @@ public record SettlementResponse(
     decimal TotalDiscount,
     decimal NetRevenue,
     string? DeviceId,
-    DateTime SubmittedAt
+    DateTime SubmittedAt,
+    int IncentiveTarget,
+    int IncentiveItemsSold,
+    bool IncentiveAchieved
 );

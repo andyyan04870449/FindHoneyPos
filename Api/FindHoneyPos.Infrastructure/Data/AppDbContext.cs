@@ -19,6 +19,7 @@ public class AppDbContext : DbContext
     public DbSet<BroadcastHistory> BroadcastHistories => Set<BroadcastHistory>();
     public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<IncentiveSetting> IncentiveSettings => Set<IncentiveSetting>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

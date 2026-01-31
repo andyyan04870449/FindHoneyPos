@@ -14,6 +14,7 @@ import { LoginPage } from '@/app/pages/LoginPage';
 import { RegisterPage } from '@/app/pages/RegisterPage';
 import { AccountManagement } from '@/app/pages/AccountManagement';
 import { AuditLogPage } from '@/app/pages/AuditLogPage';
+import { IncentiveManagement } from '@/app/pages/IncentiveManagement';
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
               <Route path="discounts" element={<DiscountManagement />} />
               <Route path="reports" element={<DailyReport />} />
               <Route path="line-oa" element={<LineOASettings />} />
+              <Route path="incentive" element={<IncentiveManagement />} />
               <Route path="accounts" element={<AccountManagement />} />
               <Route path="audit-logs" element={<AuditLogPage />} />
             </Route>

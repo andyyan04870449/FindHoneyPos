@@ -14,6 +14,7 @@ import {
   ClipboardList,
   LogOut,
   KeyRound,
+  TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
@@ -47,12 +48,14 @@ const navigation = [
   { name: '折扣管理', href: '/discounts', icon: Tag },
   { name: '日結報表', href: '/reports', icon: BarChart3 },
   { name: 'LINE OA整合', href: '/line-oa', icon: MessageSquare },
+  { name: '激勵管理', href: '/incentive', icon: TrendingUp },
   { name: '帳號管理', href: '/accounts', icon: Users },
   { name: '操作紀錄', href: '/audit-logs', icon: ClipboardList },
 ];
 
 export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -183,35 +186,36 @@ export function DashboardLayout() {
               {navigation.find((item) => item.href === location.pathname)?.name || '總覽'}
             </h2>
           </div>
-          <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                    <span className="text-orange-600 font-medium text-sm">
-                      {user?.displayName?.charAt(0) || '?'}
-                    </span>
+          <div className="relative flex items-center gap-2">
+            <Button variant="ghost" size="sm" className="gap-2" onClick={() => setUserMenuOpen(!userMenuOpen)}>
+              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                <span className="text-orange-600 font-medium text-sm">
+                  {user?.displayName?.charAt(0) || '?'}
+                </span>
+              </div>
+              <span className="hidden sm:inline text-sm">{user?.displayName || '管理員'}</span>
+            </Button>
+            {userMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-md border bg-white p-1 shadow-md">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium">{user?.displayName}</p>
+                    <p className="text-xs text-gray-500">@{user?.username}</p>
                   </div>
-                  <span className="hidden sm:inline text-sm">{user?.displayName || '管理員'}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">{user?.displayName}</p>
-                  <p className="text-xs text-gray-500">@{user?.username}</p>
+                  <div className="my-1 h-px bg-gray-200" />
+                  <button className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-gray-100" onClick={() => { setUserMenuOpen(false); setChangePasswordOpen(true); }}>
+                    <KeyRound className="h-4 w-4" />
+                    修改密碼
+                  </button>
+                  <div className="my-1 h-px bg-gray-200" />
+                  <button className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-red-600 hover:bg-red-50" onClick={() => { setUserMenuOpen(false); handleLogout(); }}>
+                    <LogOut className="h-4 w-4" />
+                    登出
+                  </button>
                 </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setChangePasswordOpen(true)}>
-                  <KeyRound className="h-4 w-4 mr-2" />
-                  修改密碼
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  登出
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </>
+            )}
           </div>
         </div>
 

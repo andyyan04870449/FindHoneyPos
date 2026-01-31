@@ -1,14 +1,21 @@
 import { useState, useEffect } from 'react';
-import { STORAGE_KEYS, DEFAULT_INCENTIVE_TARGET } from '../constants';
+import { posApi } from '../services/api';
 
 export function useIncentive() {
-  const [incentiveEnabled, setIncentiveEnabled] = useState(true);
-  const [incentiveTarget, setIncentiveTarget] = useState(DEFAULT_INCENTIVE_TARGET);
+  const [incentiveEnabled, setIncentiveEnabled] = useState(false);
+  const [incentiveTarget, setIncentiveTarget] = useState(0);
 
-  // 首次載入時設置 localStorage
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.INCENTIVE_ENABLED, 'true');
-    localStorage.setItem(STORAGE_KEYS.INCENTIVE_TARGET, String(DEFAULT_INCENTIVE_TARGET));
+    posApi.getIncentiveSettings()
+      .then((settings) => {
+        setIncentiveEnabled(settings.isEnabled);
+        setIncentiveTarget(settings.dailyTarget);
+      })
+      .catch(() => {
+        // API 失敗時保持關閉狀態
+        setIncentiveEnabled(false);
+        setIncentiveTarget(0);
+      });
   }, []);
 
   return {

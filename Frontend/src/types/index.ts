@@ -111,6 +111,9 @@ export interface SubmitSettlementRequest {
   totalOrders: number;
   totalRevenue: number;
   totalDiscount: number;
+  incentiveTarget?: number;
+  incentiveItemsSold?: number;
+  incentiveAchieved?: boolean;
 }
 
 export interface SettlementResponse {
@@ -134,6 +137,7 @@ export interface AuthUser {
   username: string;
   displayName: string;
   isActive: boolean;
+  role: string;
   createdAt: string;
   lastLoginAt?: string;
 }
@@ -145,4 +149,10 @@ export interface AuthResponse {
 
 export interface SystemStatus {
   initialized: boolean;
+}
+
+export interface IncentiveSettingsResponse {
+  isEnabled: boolean;
+  dailyTarget: number;
+  updatedAt: string;
 }

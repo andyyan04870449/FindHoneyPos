@@ -66,6 +66,6 @@ public class AuthController : ControllerBase
     }
 
     private static UserInfo MapUserInfo(Core.Entities.AdminUser user) => new(
-        user.Id, user.Username, user.DisplayName, user.IsActive, user.CreatedAt, user.LastLoginAt
+        user.Id, user.Username, user.DisplayName, user.IsActive, user.Role.ToString(), user.CreatedAt, user.LastLoginAt
     );
 }
