@@ -38,12 +38,19 @@ jobs:
       # Docker build and deploy
       - name: Setup Docker config for non-interactive session
         run: |
-          mkdir -p /tmp/docker-cd
-          cp -r ~/.docker/* /tmp/docker-cd/ 2>/dev/null || true
-          echo '{"auths":{},"credsStore":"","currentContext":"desktop-linux"}' > /tmp/docker-cd/config.json
+          mkdir -p /tmp/docker-cd/cli-plugins
+          # Copy Docker CLI plugins so docker compose works
+          cp ~/.docker/cli-plugins/* /tmp/docker-cd/cli-plugins/ 2>/dev/null || true
+          # Create config without credential store to avoid Keychain access
+          echo '{"auths":{},"currentContext":"desktop-linux"}' > /tmp/docker-cd/config.json
+          # Create a no-op credential helper to prevent Keychain access
+          printf '#!/bin/sh\necho "{}"' > /tmp/docker-cd/docker-credential-desktop
+          chmod +x /tmp/docker-cd/docker-credential-desktop
 
       - name: Build Docker images
         timeout-minutes: 10
+        env:
+          PATH: /tmp/docker-cd:${{ env.PATH }}
         run: docker compose build
 
       - name: Stop existing containers
