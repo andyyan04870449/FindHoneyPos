@@ -4,9 +4,6 @@ on:
   push:
     branches: [main]
 
-env:
-  DOCKER_CONFIG: /tmp/docker-cd
-
 jobs:
   build-and-deploy:
     runs-on: self-hosted
@@ -36,22 +33,20 @@ jobs:
           npm run build
 
       # Docker build and deploy
-      - name: Setup Docker config for non-interactive session
+      - name: Disable Docker credential store
         run: |
-          mkdir -p /tmp/docker-cd/cli-plugins
-          # Copy Docker CLI plugins so docker compose works
-          cp ~/.docker/cli-plugins/* /tmp/docker-cd/cli-plugins/ 2>/dev/null || true
-          # Create config without credential store to avoid Keychain access
-          echo '{"auths":{},"currentContext":"desktop-linux"}' > /tmp/docker-cd/config.json
-          # Create a no-op credential helper to prevent Keychain access
-          printf '#!/bin/sh\necho "{}"' > /tmp/docker-cd/docker-credential-desktop
-          chmod +x /tmp/docker-cd/docker-credential-desktop
-          # Add to PATH so Docker finds the no-op helper
-          echo "/tmp/docker-cd" >> $GITHUB_PATH
+          cp ~/.docker/config.json ~/.docker/config.json.bak
+          cat ~/.docker/config.json.bak | sed 's/"credsStore":[[:space:]]*"[^"]*"/"credsStore": ""/g' > ~/.docker/config.json
+          cat ~/.docker/config.json
 
       - name: Build Docker images
         timeout-minutes: 10
         run: docker compose build
+
+      - name: Restore Docker config
+        if: always()
+        run: |
+          [ -f ~/.docker/config.json.bak ] && mv ~/.docker/config.json.bak ~/.docker/config.json || true
 
       - name: Stop existing containers
         run: docker compose down --timeout 30
