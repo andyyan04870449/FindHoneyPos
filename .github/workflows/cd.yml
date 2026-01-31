@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
 
+env:
+  DOCKER_CONFIG: /tmp/docker-cd
+
 jobs:
   build-and-deploy:
     runs-on: self-hosted
@@ -33,6 +36,12 @@ jobs:
           npm run build
 
       # Docker build and deploy
+      - name: Setup Docker config for non-interactive session
+        run: |
+          mkdir -p /tmp/docker-cd
+          cp -r ~/.docker/* /tmp/docker-cd/ 2>/dev/null || true
+          echo '{"auths":{},"credsStore":"","currentContext":"desktop-linux"}' > /tmp/docker-cd/config.json
+
       - name: Build Docker images
         timeout-minutes: 10
         run: docker compose build
