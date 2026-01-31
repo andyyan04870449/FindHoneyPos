@@ -48,14 +48,14 @@ export function ProductGrid({
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* 搜尋列 - 固定在頂部 */}
-      <div className="shrink-0 mb-3">
+      <div className="shrink-0 mb-2 md:mb-3 lg:mb-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
           <Input
             placeholder="搜尋商品名稱或編號..."
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-11 pr-11 h-12 text-base"
+            className="pl-11 pr-11 h-10 md:h-11 lg:h-12 text-base"
           />
           {searchTerm && (
             <button
@@ -80,7 +80,7 @@ export function ProductGrid({
 
       {/* 商品網格 - 可滾動區域 */}
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-3 gap-4 pb-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2 md:gap-3 lg:gap-4 pb-3">
           {filteredProducts.map((product) => (
             <ProductCard
               key={product.id}

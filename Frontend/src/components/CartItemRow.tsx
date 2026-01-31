@@ -20,19 +20,17 @@ export function CartItemRow({ item, index, onQuantityChange, onCustomize, varian
 
   return (
     <div className="bg-gray-50 rounded-xl p-4">
-      <div className={`flex items-center ${outerGapClass}`}>
-        {/* 流水號 */}
-        <span className="shrink-0 w-7 text-sm font-bold text-gray-400 text-center">
+      {/* 上行：流水號 + 品名 + 小計 */}
+      <div className="flex items-start gap-2 mb-2">
+        <span className="shrink-0 w-7 text-sm font-bold text-gray-400 text-center leading-6">
           {index}
         </span>
-
-        {/* 商品資訊 */}
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-base text-gray-900 mb-1 truncate">
+          <h4 className="font-semibold text-base text-gray-900 leading-6">
             {item.name}
           </h4>
           {item.addons && item.addons.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-1">
+            <div className="flex flex-wrap gap-1 mt-1">
               {item.addons.map(addon => (
                 <Badge key={addon.id} variant="secondary" className="text-xs px-1.5 py-0">
                   {addon.name}
@@ -40,20 +38,25 @@ export function CartItemRow({ item, index, onQuantityChange, onCustomize, varian
               ))}
             </div>
           )}
-          <p className="text-sm text-gray-600">NT$ {item.price}</p>
         </div>
+        <div className="shrink-0 text-right">
+          <span className="font-bold text-base text-gray-900">
+            NT$ {item.price * item.quantity}
+          </span>
+        </div>
+      </div>
 
-        {/* 客製化按鈕 */}
+      {/* 下行：加料按鈕 + 數量控制 */}
+      <div className="flex items-center justify-end gap-2 ml-9">
         {onCustomize && (
           <button
             onClick={() => onCustomize(item)}
-            className="shrink-0 min-w-[120px] px-6 py-2.5 rounded-xl text-base text-center font-bold text-brand-orange bg-brand-orange/10 hover:bg-brand-orange/20 active:bg-brand-orange/30 border-2 border-brand-orange/30 transition-colors active:scale-95"
+            className="shrink-0 px-3 py-1.5 rounded-xl text-sm text-center font-bold text-brand-orange bg-brand-orange/10 hover:bg-brand-orange/20 active:bg-brand-orange/30 border-2 border-brand-orange/30 transition-colors active:scale-95"
           >
             加料
           </button>
         )}
 
-        {/* 數量控制按鈕 */}
         <div className={`flex items-center ${gapClass} bg-white rounded-lg p-1 shadow-sm`}>
           <button
             onClick={() => onQuantityChange(item, -1)}
@@ -72,13 +75,6 @@ export function CartItemRow({ item, index, onQuantityChange, onCustomize, varian
           >
             <Plus className={`${iconSize} text-white`} strokeWidth={2.5} />
           </button>
-        </div>
-
-        {/* 小計 */}
-        <div className={`text-right ${minWidthClass}`}>
-          <span className="font-bold text-base text-gray-900">
-            NT$ {item.price * item.quantity}
-          </span>
         </div>
       </div>
     </div>

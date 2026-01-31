@@ -11,9 +11,10 @@ interface OrderPreviewProps {
   onClearAll: () => void;
   onOpenCheckout: () => void;
   onCustomize?: (item: OrderItem) => void;
+  showActions?: boolean;
 }
 
-export function OrderPreview({ items, onUpdateQuantity, onClearAll, onOpenCheckout, onCustomize }: OrderPreviewProps) {
+export function OrderPreview({ items, onUpdateQuantity, onClearAll, onOpenCheckout, onCustomize, showActions = true }: OrderPreviewProps) {
   const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -63,7 +64,7 @@ export function OrderPreview({ items, onUpdateQuantity, onClearAll, onOpenChecko
         </div>
 
         {/* 底部固定區域 - 合計和按鈕 */}
-        {items.length > 0 && (
+        {showActions && items.length > 0 && (
           <div className="shrink-0">
             <Separator className="mb-4" />
 

@@ -25,7 +25,10 @@ import { posApi, ApiError } from "./services/api";
 import { orderQueue } from "./services/orderQueue";
 import { MENU_VERSION } from "./constants";
 import type { InventoryData, Product, SelectedAddon, OrderItem } from "./types";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
+import { Card } from "./components/ui/card";
+import { Button } from "./components/ui/button";
+import { Separator } from "./components/ui/separator";
 
 export default function App() {
   const { user, isAuthenticated, isInitialized, isLoading: authLoading, login, logout, register } = useAuth();
@@ -315,7 +318,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen w-full flex flex-col bg-gray-50 overflow-hidden">
+    <div className="h-[100dvh] w-full flex flex-col bg-gray-50 overflow-hidden">
       <TopBar
         isOnline={isOnline}
         menuVersion={MENU_VERSION}
@@ -335,8 +338,8 @@ export default function App() {
         isEnabled={incentiveEnabled}
       />
 
-      <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 min-h-0">
-        <div className="flex-1 lg:w-[55%] min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row gap-2 md:gap-3 lg:gap-4 p-2 md:p-3 lg:p-4 min-h-0">
+        <div className="flex-1 lg:w-[35%] min-h-0">
           <ProductGrid
             products={products}
             onProductClick={handleProductClick}
@@ -344,14 +347,49 @@ export default function App() {
           />
         </div>
 
-        <div className="hidden lg:block lg:w-[45%] min-h-0">
+        <div className="hidden lg:block lg:w-[40%] min-h-0">
           <OrderPreview
             items={orderItems}
             onUpdateQuantity={updateQuantity}
             onClearAll={clearAllItems}
             onOpenCheckout={handleOpenCheckout}
             onCustomize={handleOpenCustomize}
+            showActions={false}
           />
+        </div>
+
+        <div className="hidden lg:flex lg:w-[25%] min-h-0 flex-col gap-4">
+          <Card className="flex-1 flex flex-col justify-between bg-white border border-gray-200 p-6">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">結帳操作</h2>
+              <Separator className="mb-4" />
+              <div className="text-center py-6">
+                <div className="text-base text-gray-500 mb-2">合計金額</div>
+                <div className="text-4xl font-bold text-brand-orange">
+                  NT$ {orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)}
+                </div>
+                <div className="text-base text-gray-500 mt-2">
+                  共 {orderItems.reduce((sum, item) => sum + item.quantity, 0)} 項商品
+                </div>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={handleOpenCheckout}
+                className="w-full bg-gray-900 text-white p-5 rounded-xl text-center hover:bg-gray-800 active:scale-[0.98] transition-all"
+              >
+                <div className="text-lg font-bold">結帳</div>
+              </button>
+              <Button
+                variant="outline"
+                onClick={clearAllItems}
+                className="w-full h-14 text-base border-2 hover:bg-gray-50 active:scale-[0.98]"
+              >
+                <Trash2 className="h-5 w-5 mr-2" />
+                清空購物車
+              </Button>
+            </div>
+          </Card>
         </div>
       </div>
 

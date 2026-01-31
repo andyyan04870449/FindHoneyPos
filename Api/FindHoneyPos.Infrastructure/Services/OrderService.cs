@@ -107,7 +107,7 @@ public class OrderService : IOrderService
         var totalOrders = await todayOrders.CountAsync();
         var completedOrders = await todayOrders.CountAsync(o => o.Status == OrderStatus.Completed);
         var cancelledOrders = await todayOrders.CountAsync(o => o.Status == OrderStatus.Cancelled);
-        var totalRevenue = await todayOrders.Where(o => o.Status == OrderStatus.Completed).SumAsync(o => o.Total);
+        var totalRevenue = await todayOrders.Where(o => o.Status == OrderStatus.Completed).SumAsync(o => (decimal?)o.Total) ?? 0;
 
         return new
         {
