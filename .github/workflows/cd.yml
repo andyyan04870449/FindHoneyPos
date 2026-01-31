@@ -33,31 +33,27 @@ jobs:
           npm run build
 
       # Docker build and deploy
-      - name: Disable Docker credential helper
+      - name: Ensure Docker config has no credential store
         run: |
-          # Rename credential helper to prevent Keychain access in non-interactive session
-          if [ -f /usr/local/bin/docker-credential-desktop ]; then
-            mv /usr/local/bin/docker-credential-desktop /usr/local/bin/docker-credential-desktop.disabled
+          # Ensure credsStore is empty to avoid Keychain access
+          if grep -q '"credsStore":.*"desktop"' ~/.docker/config.json 2>/dev/null; then
+            sed -i.bak 's/"credsStore":[[:space:]]*"desktop"/"credsStore": ""/g' ~/.docker/config.json
+            echo "Config updated, restarting Docker Desktop..."
+            osascript -e 'quit app "Docker Desktop"'
+            sleep 5
+            open -a "Docker Desktop"
+            # Wait for daemon
+            for i in $(seq 1 60); do
+              docker info >/dev/null 2>&1 && echo "Docker ready" && break
+              sleep 2
+            done
           fi
-          # Also clear credsStore in config
-          if [ -f ~/.docker/config.json ]; then
-            cp ~/.docker/config.json ~/.docker/config.json.bak
-            sed 's/"credsStore":[[:space:]]*"[^"]*"/"credsStore": ""/g' ~/.docker/config.json.bak > ~/.docker/config.json
-          fi
+          echo "Current config:"
+          cat ~/.docker/config.json
 
       - name: Build Docker images
         timeout-minutes: 10
         run: docker compose build
-
-      - name: Restore Docker credential helper
-        if: always()
-        run: |
-          if [ -f /usr/local/bin/docker-credential-desktop.disabled ]; then
-            mv /usr/local/bin/docker-credential-desktop.disabled /usr/local/bin/docker-credential-desktop
-          fi
-          if [ -f ~/.docker/config.json.bak ]; then
-            mv ~/.docker/config.json.bak ~/.docker/config.json
-          fi
 
       - name: Stop existing containers
         run: docker compose down --timeout 30
