@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner@2.0.3';
 import type { PosDiscount } from '../types';
 import { posApi } from '../services/api';
 import { logger } from '../utils/logger';
@@ -14,10 +15,10 @@ export function useDiscounts() {
       .then((data) => {
         setDiscounts(data);
         logger.systemEvent('從 API 載入折扣', { count: data.length, discounts: data });
-        console.log('[useDiscounts] API 回傳折扣資料:', JSON.stringify(data, null, 2));
       })
       .catch((err) => {
         logger.warn('載入折扣失敗，使用空陣列（仍可自訂輸入）', { error: String(err) });
+        toast.error('載入折扣失敗，請檢查網路連線');
       })
       .finally(() => setLoading(false));
   }, []);
