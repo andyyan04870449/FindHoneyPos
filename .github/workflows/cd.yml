@@ -33,23 +33,15 @@ jobs:
           npm run build
 
       # Docker build and deploy
-      - name: Ensure Docker config has no credential store
+      - name: Patch Docker config before build
         run: |
-          # Ensure credsStore is empty to avoid Keychain access
-          if grep -q '"credsStore":.*"desktop"' ~/.docker/config.json 2>/dev/null; then
-            sed -i.bak 's/"credsStore":[[:space:]]*"desktop"/"credsStore": ""/g' ~/.docker/config.json
-            echo "Config updated, restarting Docker Desktop..."
-            osascript -e 'quit app "Docker Desktop"'
-            sleep 5
-            open -a "Docker Desktop"
-            # Wait for daemon
-            for i in $(seq 1 60); do
-              docker info >/dev/null 2>&1 && echo "Docker ready" && break
-              sleep 2
-            done
-          fi
-          echo "Current config:"
+          # Docker Desktop resets credsStore on startup, so patch it right before build
+          sed -i.bak 's/"credsStore":[[:space:]]*"[^"]*"/"credsStore": ""/g' ~/.docker/config.json
+          echo "Patched config:"
           cat ~/.docker/config.json
+          # Restart buildkit to pick up new config
+          docker buildx stop desktop-linux 2>/dev/null || true
+          sleep 2
 
       - name: Build Docker images
         timeout-minutes: 10
