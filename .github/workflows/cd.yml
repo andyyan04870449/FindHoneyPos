@@ -1,0 +1,74 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            Frontend/package-lock.json
+            Backend/package-lock.json
+
+      # Build verification (fast-fail before Docker)
+      - name: Build Frontend
+        working-directory: Frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build Backend
+        working-directory: Backend
+        run: |
+          npm ci
+          npm run build
+
+      # Docker build and deploy
+      - name: Configure Docker credentials
+        run: |
+          mkdir -p /tmp/docker-cd
+          echo '{"credsStore":"","currentContext":"desktop-linux"}' > /tmp/docker-cd/config.json
+
+      - name: Build Docker images
+        timeout-minutes: 10
+        env:
+          DOCKER_CONFIG: /tmp/docker-cd
+        run: docker compose build
+
+      - name: Stop existing containers
+        run: docker compose down --timeout 30
+
+      - name: Start containers
+        run: docker compose up -d --wait --wait-timeout 60
+
+      # Health checks with retry
+      - name: Verify Frontend
+        run: |
+          for i in 1 2 3 4 5; do
+            curl -f http://localhost:3000/ && exit 0
+            sleep 3
+          done
+          echo "Frontend health check failed"
+          exit 1
+
+      - name: Verify Backend
+        run: |
+          for i in 1 2 3 4 5; do
+            curl -f http://localhost:3001/ && exit 0
+            sleep 3
+          done
+          echo "Backend health check failed"
+          exit 1
+
+      # Cleanup
+      - name: Prune unused images
+        run: docker image prune -f
