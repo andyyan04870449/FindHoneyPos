@@ -27,62 +27,14 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-
-// 日報表數據
-const dailyReportData = {
-  date: new Date('2026-01-31'),
-  orderCount: 156,
-  totalRevenue: 45320,
-  totalDiscount: 5160,
-  netRevenue: 40160,
-  stockSold: 587,
-  averageOrderValue: 290,
-  comparisonYesterday: {
-    revenue: 12.5,
-    orders: 8.2,
-  },
-};
-
-// 小時銷售數據
-const hourlySales = [
-  { hour: '09:00', sales: 2400, orders: 8 },
-  { hour: '10:00', sales: 3800, orders: 12 },
-  { hour: '11:00', sales: 4200, orders: 15 },
-  { hour: '12:00', sales: 5800, orders: 22 },
-  { hour: '13:00', sales: 6200, orders: 24 },
-  { hour: '14:00', sales: 5400, orders: 19 },
-  { hour: '15:00', sales: 4800, orders: 18 },
-  { hour: '16:00', sales: 4200, orders: 16 },
-  { hour: '17:00', sales: 5200, orders: 20 },
-  { hour: '18:00', sales: 3320, orders: 12 },
-];
-
-// 分類銷售數據
-const categorySales = [
-  { name: '蛋糕', value: 15800, percentage: 35 },
-  { name: '泡芙', value: 12650, percentage: 28 },
-  { name: '餅乾', value: 9060, percentage: 20 },
-  { name: '布丁', value: 5430, percentage: 12 },
-  { name: '其他', value: 2260, percentage: 5 },
-];
-
-const COLORS = ['#f97316', '#fb923c', '#fdba74', '#fed7aa', '#ffedd5'];
-
-// 付款方式統計
-const paymentMethods = [
-  { method: '現金', count: 85, amount: 24650, percentage: 54.5 },
-  { method: '信用卡', count: 45, amount: 13590, percentage: 30.0 },
-  { method: 'LINE Pay', count: 26, amount: 7080, percentage: 15.6 },
-];
-
-// 熱銷商品
-const topProducts = [
-  { name: '抹茶紅豆瑪德蓮', quantity: 45, revenue: 3150 },
-  { name: '巧克力泡芙', quantity: 38, revenue: 2470 },
-  { name: '草莓蛋糕', quantity: 35, revenue: 2625 },
-  { name: '芝士蛋糕', quantity: 32, revenue: 2560 },
-  { name: '焦糖布丁', quantity: 28, revenue: 1680 },
-];
+import {
+  dailyReportData,
+  hourlySales,
+  categorySales,
+  paymentMethodStats,
+  reportTopProducts,
+} from '@/data/mockData';
+import { PIE_CHART_COLORS } from '@/constants';
 
 export function DailyReport() {
   const [selectedDate, setSelectedDate] = useState('today');
@@ -98,7 +50,6 @@ export function DailyReport() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">日結報表</h2>
@@ -133,7 +84,6 @@ export function DailyReport() {
         </div>
       </div>
 
-      {/* Key Metrics */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-6">
           <div className="flex items-center justify-between">
@@ -188,9 +138,7 @@ export function DailyReport() {
         </Card>
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Hourly Sales */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">每小時營業額</h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -204,7 +152,6 @@ export function DailyReport() {
           </ResponsiveContainer>
         </Card>
 
-        {/* Category Sales */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">分類銷售佔比</h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -219,8 +166,8 @@ export function DailyReport() {
                 fill="#8884d8"
                 dataKey="value"
               >
-                {categorySales.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                {categorySales.map((_entry, index) => (
+                  <Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip />
@@ -229,29 +176,20 @@ export function DailyReport() {
         </Card>
       </div>
 
-      {/* Payment Methods */}
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">付款方式統計</h3>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                  付款方式
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                  筆數
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                  金額
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                  佔比
-                </th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">付款方式</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">筆數</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">金額</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">佔比</th>
               </tr>
             </thead>
             <tbody>
-              {paymentMethods.map((payment) => (
+              {paymentMethodStats.map((payment) => (
                 <tr key={payment.method} className="border-b hover:bg-gray-50">
                   <td className="py-3 px-4 font-medium">{payment.method}</td>
                   <td className="py-3 px-4 text-right">{payment.count}</td>
@@ -268,29 +206,20 @@ export function DailyReport() {
         </div>
       </Card>
 
-      {/* Top Products */}
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">今日熱銷商品 Top 5</h3>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                  排名
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                  商品名稱
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                  銷售數量
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                  營業額
-                </th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">排名</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">商品名稱</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">銷售數量</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">營業額</th>
               </tr>
             </thead>
             <tbody>
-              {topProducts.map((product, index) => (
+              {reportTopProducts.map((product, index) => (
                 <tr key={product.name} className="border-b hover:bg-gray-50">
                   <td className="py-3 px-4">
                     <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold">
@@ -300,7 +229,7 @@ export function DailyReport() {
                   <td className="py-3 px-4 font-medium">{product.name}</td>
                   <td className="py-3 px-4 text-right">{product.quantity}</td>
                   <td className="py-3 px-4 text-right font-semibold text-orange-600">
-                    NT$ {product.revenue.toLocaleString()}
+                    NT$ {typeof product.revenue === 'number' ? product.revenue.toLocaleString() : product.revenue}
                   </td>
                 </tr>
               ))}
@@ -309,7 +238,6 @@ export function DailyReport() {
         </div>
       </Card>
 
-      {/* Summary */}
       <Card className="p-6 bg-orange-50 border-orange-200">
         <h3 className="text-lg font-semibold mb-4">日結匯總</h3>
         <div className="space-y-3">

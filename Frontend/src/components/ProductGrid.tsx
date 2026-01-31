@@ -3,13 +3,7 @@ import { Search, X } from 'lucide-react';
 import { Input } from './ui/input';
 import { ProductCard } from './ProductCard';
 import { logger } from '../utils/logger';
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  isPopular?: boolean;
-}
+import type { Product } from '../types';
 
 interface ProductGridProps {
   products: Product[];

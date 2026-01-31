@@ -1,18 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Calculator, Printer, TrendingUp, Trophy, ArrowLeft, Check } from "lucide-react";
-
-interface CompletedOrder {
-  id: string;
-  timestamp: Date;
-  items: { name: string; quantity: number; price: number }[];
-  subtotal: number;
-  discount?: {
-    type: 'percentage' | 'fixed' | 'gift';
-    value: number;
-  };
-  total: number;
-}
+import type { CompletedOrder, InventoryData } from "../types";
 
 interface DailySettlementDialogProps {
   open: boolean;

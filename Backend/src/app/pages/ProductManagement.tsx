@@ -14,30 +14,11 @@ import {
 } from '@/app/components/ui/dialog';
 import { Label } from '@/app/components/ui/label';
 import { toast } from 'sonner';
-
-// 模擬商品數據
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  status: 'active' | 'inactive';
-}
-
-const initialProducts: Product[] = [
-  { id: '1', name: '杏仁餅乾', price: 45, status: 'active' },
-  { id: '2', name: '巧克力泡芙', price: 65, status: 'active' },
-  { id: '3', name: '草莓蛋糕', price: 75, status: 'active' },
-  { id: '4', name: '焦糖布丁', price: 60, status: 'active' },
-  { id: '5', name: '芒果慕斯', price: 80, status: 'active' },
-  { id: '6', name: '芝士蛋糕', price: 80, status: 'active' },
-  { id: '7', name: '法式馬卡龍', price: 45, status: 'active' },
-  { id: '8', name: '藍莓司康', price: 55, status: 'active' },
-  { id: '9', name: '抹茶紅豆瑪德蓮', price: 70, status: 'active' },
-  { id: '10', name: '檸檬塔', price: 65, status: 'active' },
-];
+import type { Product } from '@/types';
+import { mockProducts } from '@/data/mockData';
 
 export function ProductManagement() {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>(mockProducts);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -77,21 +58,15 @@ export function ProductManagement() {
     }
 
     if (editingProduct) {
-      // 編輯商品
       setProducts(
         products.map((p) =>
           p.id === editingProduct.id
-            ? {
-                ...p,
-                name: formData.name,
-                price: parseFloat(formData.price),
-              }
+            ? { ...p, name: formData.name, price: parseFloat(formData.price) }
             : p
         )
       );
       toast.success('商品已更新');
     } else {
-      // 新增商品
       const newProduct: Product = {
         id: Date.now().toString(),
         name: formData.name,
@@ -107,7 +82,6 @@ export function ProductManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">商品管理</h2>
@@ -119,7 +93,6 @@ export function ProductManagement() {
         </Button>
       </div>
 
-      {/* Search */}
       <Card className="p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -132,24 +105,15 @@ export function ProductManagement() {
         </div>
       </Card>
 
-      {/* Products Table */}
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                  商品名稱
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                  價格
-                </th>
-                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">
-                  狀態
-                </th>
-                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">
-                  操作
-                </th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">商品名稱</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">價格</th>
+                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">狀態</th>
+                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -160,22 +124,14 @@ export function ProductManagement() {
                   <td className="py-3 px-4 text-center">
                     <Badge
                       variant={product.status === 'active' ? 'default' : 'secondary'}
-                      className={
-                        product.status === 'active'
-                          ? 'bg-green-100 text-green-700'
-                          : ''
-                      }
+                      className={product.status === 'active' ? 'bg-green-100 text-green-700' : ''}
                     >
                       {product.status === 'active' ? '上架中' : '已下架'}
                     </Badge>
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center justify-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditProduct(product)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleEditProduct(product)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
@@ -201,13 +157,10 @@ export function ProductManagement() {
         )}
       </Card>
 
-      {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {editingProduct ? '編輯商品' : '新增商品'}
-            </DialogTitle>
+            <DialogTitle>{editingProduct ? '編輯商品' : '新增商品'}</DialogTitle>
             <DialogDescription>
               {editingProduct ? '修改商品資訊' : '填寫新商品的詳細資訊'}
             </DialogDescription>
@@ -219,35 +172,25 @@ export function ProductManagement() {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="請輸入商品名稱"
               />
             </div>
-
             <div>
               <Label htmlFor="price">價格 (NT$)</Label>
               <Input
                 id="price"
                 type="number"
                 value={formData.price}
-                onChange={(e) =>
-                  setFormData({ ...formData, price: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 placeholder="0"
               />
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              取消
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              className="bg-orange-500 hover:bg-orange-600"
-            >
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>取消</Button>
+            <Button onClick={handleSubmit} className="bg-orange-500 hover:bg-orange-600">
               {editingProduct ? '更新' : '新增'}
             </Button>
           </DialogFooter>

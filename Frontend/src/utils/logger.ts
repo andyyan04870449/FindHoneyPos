@@ -1,15 +1,8 @@
-type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
-
-interface LogEntry {
-  timestamp: string;
-  level: LogLevel;
-  message: string;
-  data?: any;
-}
+import type { LogLevel, LogEntry } from '../types';
+import { MAX_LOG_ENTRIES, STORAGE_KEYS } from '../constants';
 
 class Logger {
   private logs: LogEntry[] = [];
-  private maxLogs = 1000;
 
   private formatTimestamp(): string {
     return new Date().toISOString();
@@ -24,13 +17,13 @@ class Logger {
     };
 
     this.logs.push(entry);
-    if (this.logs.length > this.maxLogs) {
+    if (this.logs.length > MAX_LOG_ENTRIES.MEMORY) {
       this.logs.shift();
     }
 
     // 儲存到 localStorage
     try {
-      localStorage.setItem('pos_logs', JSON.stringify(this.logs.slice(-100)));
+      localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(this.logs.slice(-MAX_LOG_ENTRIES.STORAGE)));
     } catch (e) {
       console.warn('無法儲存日誌到 localStorage');
     }
@@ -93,7 +86,7 @@ class Logger {
   // 清除日誌
   clearLogs() {
     this.logs = [];
-    localStorage.removeItem('pos_logs');
+    localStorage.removeItem(STORAGE_KEYS.LOGS);
     this.info('日誌已清除');
   }
 
@@ -105,7 +98,7 @@ class Logger {
   // 初始化時載入儲存的日誌
   loadStoredLogs() {
     try {
-      const stored = localStorage.getItem('pos_logs');
+      const stored = localStorage.getItem(STORAGE_KEYS.LOGS);
       if (stored) {
         const parsedLogs = JSON.parse(stored);
         this.logs = parsedLogs;

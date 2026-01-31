@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { logger } from '../utils/logger';
+import { HEARTBEAT_INTERVAL } from '../constants';
 
 export function useOnlineStatus() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -39,7 +40,7 @@ export function useOnlineStatus() {
       }
     };
 
-    const interval = setInterval(checkConnection, 30000); // 每30秒檢查一次
+    const interval = setInterval(checkConnection, HEARTBEAT_INTERVAL);
 
     return () => {
       window.removeEventListener('online', handleOnline);

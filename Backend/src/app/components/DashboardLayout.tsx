@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { cn } from '@/app/components/ui/utils';
+import { APP_VERSION } from '@/constants';
 
 const navigation = [
   { name: '總覽', href: '/dashboard', icon: LayoutDashboard },
@@ -91,7 +92,7 @@ export function DashboardLayout() {
           {/* Footer info */}
           <div className="border-t p-4">
             <div className="text-xs text-gray-500">
-              <p>版本：v2.1.3</p>
+              <p>版本：{APP_VERSION}</p>
               <p className="mt-1">© 2026 尋蜜點餐系統</p>
             </div>
           </div>

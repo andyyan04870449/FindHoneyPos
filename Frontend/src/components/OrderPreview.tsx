@@ -1,14 +1,9 @@
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
-import { Trash2, ShoppingCart, Plus, Minus } from "lucide-react";
-
-interface OrderItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-}
+import { Trash2, ShoppingCart } from "lucide-react";
+import type { OrderItem } from "../types";
+import { CartItemRow } from "./CartItemRow";
 
 interface OrderPreviewProps {
   items: OrderItem[];
@@ -54,49 +49,12 @@ export function OrderPreview({ items, onUpdateQuantity, onClearAll, onOpenChecko
             </div>
           ) : (
             items.map((item) => (
-              <div
+              <CartItemRow
                 key={item.id}
-                className="bg-gray-50 rounded-xl p-4"
-              >
-                {/* 商品資訊和數量控制 */}
-                <div className="flex items-center gap-3">
-                  {/* 商品資訊 */}
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-base text-gray-900 mb-1">
-                      {item.name}
-                    </h4>
-                    <p className="text-sm text-gray-600">NT$ {item.price}</p>
-                  </div>
-                  
-                  {/* 數量控制按鈕 */}
-                  <div className="flex items-center gap-2 bg-white rounded-lg p-1 shadow-sm">
-                    <button
-                      onClick={() => handleQuantityChange(item, -1)}
-                      className="flex items-center justify-center w-9 h-9 rounded-lg bg-gray-100 hover:bg-gray-200 active:bg-gray-300 transition-colors active:scale-95"
-                    >
-                      <Minus className="h-4 w-4 text-gray-700" strokeWidth={2.5} />
-                    </button>
-                    
-                    <span className="w-8 text-center font-bold text-base text-gray-900">
-                      {item.quantity}
-                    </span>
-                    
-                    <button
-                      onClick={() => handleQuantityChange(item, 1)}
-                      className="flex items-center justify-center w-9 h-9 rounded-lg bg-brand-orange hover:bg-brand-orange/90 active:bg-brand-orange/80 transition-colors active:scale-95"
-                    >
-                      <Plus className="h-4 w-4 text-white" strokeWidth={2.5} />
-                    </button>
-                  </div>
-                  
-                  {/* 小計 */}
-                  <div className="text-right min-w-[70px]">
-                    <span className="font-bold text-base text-gray-900">
-                      NT$ {item.price * item.quantity}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                item={item}
+                onQuantityChange={handleQuantityChange}
+                variant="desktop"
+              />
             ))
           )}
         </div>
@@ -105,7 +63,7 @@ export function OrderPreview({ items, onUpdateQuantity, onClearAll, onOpenChecko
         {items.length > 0 && (
           <div className="shrink-0">
             <Separator className="mb-4" />
-            
+
             {/* 合計區域 - 可點擊進入結帳 */}
             <button
               onClick={onOpenCheckout}

@@ -22,105 +22,18 @@ import {
 } from '@/app/components/ui/select';
 import { Switch } from '@/app/components/ui/switch';
 import { toast } from 'sonner';
+import type { Discount } from '@/types';
+import { mockDiscounts } from '@/data/mockData';
+import { DISCOUNT_TYPE_LABELS, DISCOUNT_TYPE_COLORS } from '@/constants';
 
-// 折扣類型
-interface Discount {
-  id: string;
-  name: string;
-  type: 'percentage' | 'amount' | 'gift';
-  value: number;
-  minPurchase: number;
-  isActive: boolean;
-  description: string;
-}
-
-// 模擬折扣數據
-const initialDiscounts: Discount[] = [
-  {
-    id: '1',
-    name: '9折優惠',
-    type: 'percentage',
-    value: 10,
-    minPurchase: 0,
-    isActive: true,
-    description: '全場9折優惠',
-  },
-  {
-    id: '2',
-    name: '85折優惠',
-    type: 'percentage',
-    value: 15,
-    minPurchase: 0,
-    isActive: true,
-    description: '全場85折優惠',
-  },
-  {
-    id: '3',
-    name: '8折優惠',
-    type: 'percentage',
-    value: 20,
-    minPurchase: 0,
-    isActive: true,
-    description: '全場8折優惠',
-  },
-  {
-    id: '4',
-    name: '75折優惠',
-    type: 'percentage',
-    value: 25,
-    minPurchase: 0,
-    isActive: true,
-    description: '全場75折優惠',
-  },
-  {
-    id: '5',
-    name: '滿500折50',
-    type: 'amount',
-    value: 50,
-    minPurchase: 500,
-    isActive: true,
-    description: '消費滿NT$500折NT$50',
-  },
-  {
-    id: '6',
-    name: '滿1000折150',
-    type: 'amount',
-    value: 150,
-    minPurchase: 1000,
-    isActive: true,
-    description: '消費滿NT$1,000折NT$150',
-  },
-  {
-    id: '7',
-    name: '買5送1',
-    type: 'gift',
-    value: 1,
-    minPurchase: 5,
-    isActive: false,
-    description: '購買5件商品贈送1件',
-  },
-];
-
-const discountTypeIcons = {
+const discountTypeIcons: Record<string, typeof Percent> = {
   percentage: Percent,
   amount: DollarSign,
   gift: Gift,
 };
 
-const discountTypeLabels = {
-  percentage: '百分比折扣',
-  amount: '金額折扣',
-  gift: '整單贈送',
-};
-
-const discountTypeColors = {
-  percentage: 'bg-orange-100 text-orange-700',
-  amount: 'bg-blue-100 text-blue-700',
-  gift: 'bg-purple-100 text-purple-700',
-};
-
 export function DiscountManagement() {
-  const [discounts, setDiscounts] = useState<Discount[]>(initialDiscounts);
+  const [discounts, setDiscounts] = useState<Discount[]>(mockDiscounts);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState<Discount | null>(null);
   const [formData, setFormData] = useState({
@@ -167,9 +80,7 @@ export function DiscountManagement() {
       )
     );
     const discount = discounts.find((d) => d.id === discountId);
-    toast.success(
-      discount?.isActive ? '折扣已停用' : '折扣已啟用'
-    );
+    toast.success(discount?.isActive ? '折扣已停用' : '折扣已啟用');
   };
 
   const handleSubmit = () => {
@@ -179,7 +90,6 @@ export function DiscountManagement() {
     }
 
     if (editingDiscount) {
-      // 編輯折扣
       setDiscounts(
         discounts.map((d) =>
           d.id === editingDiscount.id
@@ -196,7 +106,6 @@ export function DiscountManagement() {
       );
       toast.success('折扣已更新');
     } else {
-      // 新增折扣
       const newDiscount: Discount = {
         id: Date.now().toString(),
         name: formData.name,
@@ -225,7 +134,6 @@ export function DiscountManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">折扣管理</h2>
@@ -237,7 +145,6 @@ export function DiscountManagement() {
         </Button>
       </div>
 
-      {/* Discounts Grid */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {discounts.map((discount) => {
           const Icon = discountTypeIcons[discount.type];
@@ -250,16 +157,16 @@ export function DiscountManagement() {
                   </Badge>
                 </div>
               )}
-              
+
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${discountTypeColors[discount.type]}`}>
+                  <div className={`p-2 rounded-lg ${DISCOUNT_TYPE_COLORS[discount.type]}`}>
                     <Icon className="h-5 w-5" />
                   </div>
                   <div>
                     <h3 className="font-semibold">{discount.name}</h3>
                     <Badge variant="secondary" className="mt-1">
-                      {discountTypeLabels[discount.type]}
+                      {DISCOUNT_TYPE_LABELS[discount.type]}
                     </Badge>
                   </div>
                 </div>
@@ -288,12 +195,7 @@ export function DiscountManagement() {
                 )}
 
                 <div className="flex items-center gap-2 pt-3 border-t">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEditDiscount(discount)}
-                    className="flex-1"
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => handleEditDiscount(discount)} className="flex-1">
                     <Pencil className="h-4 w-4 mr-2" />
                     編輯
                   </Button>
@@ -312,13 +214,10 @@ export function DiscountManagement() {
         })}
       </div>
 
-      {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {editingDiscount ? '編輯折扣' : '新增折扣'}
-            </DialogTitle>
+            <DialogTitle>{editingDiscount ? '編輯折扣' : '新增折扣'}</DialogTitle>
             <DialogDescription>
               {editingDiscount ? '修改折扣設定' : '建立新的折扣規則'}
             </DialogDescription>
@@ -330,13 +229,10 @@ export function DiscountManagement() {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="例如：9折優惠"
               />
             </div>
-
             <div>
               <Label htmlFor="type">折扣類型</Label>
               <Select
@@ -355,7 +251,6 @@ export function DiscountManagement() {
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <Label htmlFor="value">
                 {formData.type === 'percentage'
@@ -368,9 +263,7 @@ export function DiscountManagement() {
                 id="value"
                 type="number"
                 value={formData.value}
-                onChange={(e) =>
-                  setFormData({ ...formData, value: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, value: e.target.value })}
                 placeholder={
                   formData.type === 'percentage'
                     ? '輸入折扣百分比（例如：10 = 9折）'
@@ -385,44 +278,32 @@ export function DiscountManagement() {
                 </p>
               )}
             </div>
-
             <div>
               <Label htmlFor="minPurchase">
-                最低消費要求
-                {formData.type === 'gift' && '（件數）'}
+                最低消費要求{formData.type === 'gift' && '（件數）'}
               </Label>
               <Input
                 id="minPurchase"
                 type="number"
                 value={formData.minPurchase}
-                onChange={(e) =>
-                  setFormData({ ...formData, minPurchase: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, minPurchase: e.target.value })}
                 placeholder="0"
               />
             </div>
-
             <div>
               <Label htmlFor="description">說明</Label>
               <Input
                 id="description"
                 value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="輸入折扣說明"
               />
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              取消
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              className="bg-orange-500 hover:bg-orange-600"
-            >
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>取消</Button>
+            <Button onClick={handleSubmit} className="bg-orange-500 hover:bg-orange-600">
               {editingDiscount ? '更新' : '新增'}
             </Button>
           </DialogFooter>

@@ -1,15 +1,10 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
+import { ShoppingCart, Trash2 } from "lucide-react";
 import { Separator } from "./ui/separator";
-
-interface OrderItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-}
+import type { OrderItem } from "../types";
+import { CartItemRow } from "./CartItemRow";
 
 interface MobileCartSheetProps {
   items: OrderItem[];
@@ -18,11 +13,11 @@ interface MobileCartSheetProps {
   onOpenCheckout: () => void;
 }
 
-export function MobileCartSheet({ 
-  items, 
+export function MobileCartSheet({
+  items,
   onUpdateQuantity,
-  onClearAll, 
-  onOpenCheckout 
+  onClearAll,
+  onOpenCheckout
 }: MobileCartSheetProps) {
   const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -35,7 +30,7 @@ export function MobileCartSheet({
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button 
+        <Button
           className="fixed bottom-6 right-6 z-50 bg-brand-orange hover:bg-brand-orange-dark text-white rounded-full w-16 h-16 shadow-xl lg:hidden active:scale-95"
           size="icon"
         >
@@ -71,49 +66,12 @@ export function MobileCartSheet({
               </div>
             ) : (
               items.map((item) => (
-                <div
+                <CartItemRow
                   key={item.id}
-                  className="bg-gray-50 rounded-xl p-4"
-                >
-                  {/* 商品資訊和數量控制 */}
-                  <div className="flex items-center gap-4">
-                    {/* 商品資訊 */}
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-base text-gray-900 mb-1">
-                        {item.name}
-                      </h4>
-                      <p className="text-sm text-gray-600">NT$ {item.price}</p>
-                    </div>
-                    
-                    {/* 數量控制 */}
-                    <div className="flex items-center gap-3 bg-white rounded-lg p-1 shadow-sm">
-                      <button
-                        onClick={() => handleQuantityChange(item, -1)}
-                        className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 active:bg-gray-300 transition-colors active:scale-95"
-                      >
-                        <Minus className="h-5 w-5 text-gray-700" strokeWidth={2.5} />
-                      </button>
-                      
-                      <span className="w-8 text-center font-bold text-base text-gray-900">
-                        {item.quantity}
-                      </span>
-                      
-                      <button
-                        onClick={() => handleQuantityChange(item, 1)}
-                        className="flex items-center justify-center w-10 h-10 rounded-lg bg-brand-orange active:bg-brand-orange/80 transition-colors active:scale-95"
-                      >
-                        <Plus className="h-5 w-5 text-white" strokeWidth={2.5} />
-                      </button>
-                    </div>
-                    
-                    {/* 小計 */}
-                    <div className="text-right min-w-20">
-                      <span className="font-bold text-base text-gray-900">
-                        NT$ {item.price * item.quantity}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                  item={item}
+                  onQuantityChange={handleQuantityChange}
+                  variant="mobile"
+                />
               ))
             )}
           </div>
@@ -121,7 +79,7 @@ export function MobileCartSheet({
           {items.length > 0 && (
             <>
               <Separator className="my-4" />
-              
+
               {/* 合計區域 - 可點擊進入結帳 */}
               <button
                 onClick={onOpenCheckout}

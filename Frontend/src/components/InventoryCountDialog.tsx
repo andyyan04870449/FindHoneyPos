@@ -3,12 +3,7 @@ import { Package, Check, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-}
+import type { Product, InventoryData } from "../types";
 
 interface InventoryCountDialogProps {
   open: boolean;

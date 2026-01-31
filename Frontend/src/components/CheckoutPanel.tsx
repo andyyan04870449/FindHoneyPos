@@ -5,13 +5,8 @@ import { Input } from "./ui/input";
 import { Separator } from "./ui/separator";
 import { Badge } from "./ui/badge";
 import { X, Percent, DollarSign, Gift } from "lucide-react";
-
-interface OrderItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-}
+import type { OrderItem, DiscountInfo, DiscountType } from '../types';
+import { QUICK_DISCOUNT_PERCENTAGES, QUICK_DISCOUNT_AMOUNTS } from '../constants';
 
 interface CheckoutPanelProps {
   open: boolean;
@@ -19,17 +14,6 @@ interface CheckoutPanelProps {
   items: OrderItem[];
   onConfirmCheckout: (discountInfo: DiscountInfo) => void;
 }
-
-export interface DiscountInfo {
-  type: 'percentage' | 'amount' | 'free';
-  value: number;
-  label: string;
-  originalTotal: number;
-  discountAmount: number;
-  finalTotal: number;
-}
-
-type DiscountType = 'percentage' | 'amount' | 'free';
 
 export function CheckoutPanel({ 
   open, 
@@ -84,21 +68,8 @@ export function CheckoutPanel({
 
   const discount = calculateDiscount();
 
-  // 快速折扣按鈕
-  const quickDiscountButtons = [
-    { label: '9折', value: 10 },
-    { label: '85折', value: 15 },
-    { label: '8折', value: 20 },
-    { label: '75折', value: 25 },
-  ];
-
-  // 快速金額折扣按鈕
-  const quickAmountButtons = [
-    { label: '-50', value: 50 },
-    { label: '100', value: 100 },
-    { label: '200', value: 200 },
-    { label: '500', value: 500 },
-  ];
+  const quickDiscountButtons = QUICK_DISCOUNT_PERCENTAGES;
+  const quickAmountButtons = QUICK_DISCOUNT_AMOUNTS;
 
   const handleQuickPercentage = (percentage: number) => {
     setCustomPercentage(percentage.toString());
