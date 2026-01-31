@@ -57,6 +57,7 @@ builder.Services.AddScoped<ILineOaService, LineOaService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IIncentiveService, IncentiveService>();
 
 // JWT Authentication
 var jwtConfig = builder.Configuration.GetSection("Jwt");
@@ -69,6 +70,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    options.MapInboundClaims = false;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -78,6 +80,8 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtConfig["Issuer"],
         ValidAudience = jwtConfig["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(secretKey),
+        NameClaimType = "name",
+        RoleClaimType = "role",
     };
 });
 
@@ -116,11 +120,13 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Auto migrate
+// Auto migrate + seed
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.MigrateAsync();
+    var seedLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    await DataSeeder.SeedAsync(db, seedLogger);
 }
 
 app.UseMiddleware<GlobalExceptionMiddleware>();

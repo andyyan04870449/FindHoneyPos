@@ -2,6 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import type { AuthUser } from '../types';
 import { authApi, getToken, setToken, clearToken, setOnUnauthorized } from '../services/api';
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+}
+
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -24,8 +33,14 @@ export function useAuth() {
 
       const token = getToken();
       if (token && status.initialized) {
+        if (isTokenExpired(token)) {
+          clearToken();
+          localStorage.removeItem('pos_auth_user');
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          return;
+        }
         setIsAuthenticated(true);
-        // We don't have a /me endpoint for POS, so we store user from login
         const stored = localStorage.getItem('pos_auth_user');
         if (stored) {
           try {

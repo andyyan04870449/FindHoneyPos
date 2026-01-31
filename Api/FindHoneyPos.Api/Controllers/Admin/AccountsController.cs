@@ -21,6 +21,7 @@ public class AccountsController : ControllerBase
         _auditLogService = auditLogService;
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -29,6 +30,7 @@ public class AccountsController : ControllerBase
         return Ok(ApiResponse<IEnumerable<UserInfo>>.Ok(result));
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
     {
@@ -38,9 +40,12 @@ public class AccountsController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 6)
             return BadRequest(ApiResponse<object>.Fail("密碼至少需要 6 個字元"));
 
+        if (!Enum.TryParse<Core.Enums.UserRole>(request.Role, true, out var role))
+            return BadRequest(ApiResponse<object>.Fail("無效的角色"));
+
         try
         {
-            var user = await _authService.CreateUserAsync(request.Username, request.Password, request.DisplayName);
+            var user = await _authService.CreateUserAsync(request.Username, request.Password, request.DisplayName, role);
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
             await _auditLogService.LogAsync(GetCurrentUserId(), GetCurrentUsername(), AuditAction.CreateUser.ToString(),
                 $"建立帳號: {user.Username}", ip);
@@ -63,6 +68,7 @@ public class AccountsController : ControllerBase
         return Ok(ApiResponse<UserInfo>.Ok(MapUserInfo(user)));
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateUserRequest request)
     {
@@ -75,6 +81,7 @@ public class AccountsController : ControllerBase
         return Ok(ApiResponse<UserInfo>.Ok(MapUserInfo(user)));
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPatch("{id}/status")]
     public async Task<IActionResult> ToggleStatus(int id)
     {
@@ -92,6 +99,7 @@ public class AccountsController : ControllerBase
         return Ok(ApiResponse<UserInfo>.Ok(MapUserInfo(user)));
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost("{id}/reset-password")]
     public async Task<IActionResult> ResetPassword(int id, [FromBody] ResetPasswordRequest request)
     {
@@ -138,6 +146,6 @@ public class AccountsController : ControllerBase
     }
 
     private static UserInfo MapUserInfo(Core.Entities.AdminUser user) => new(
-        user.Id, user.Username, user.DisplayName, user.IsActive, user.CreatedAt, user.LastLoginAt
+        user.Id, user.Username, user.DisplayName, user.IsActive, user.Role.ToString(), user.CreatedAt, user.LastLoginAt
     );
 }

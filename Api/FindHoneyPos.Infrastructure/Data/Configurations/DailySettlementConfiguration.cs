@@ -15,5 +15,10 @@ public class DailySettlementConfiguration : IEntityTypeConfiguration<DailySettle
         builder.Property(ds => ds.NetRevenue).HasPrecision(12, 2);
         builder.Property(ds => ds.DeviceId).HasMaxLength(50);
         builder.HasIndex(ds => ds.Date).IsUnique();
+
+        // 激勵欄位
+        builder.Property(ds => ds.IncentiveTarget).HasDefaultValue(0);
+        builder.Property(ds => ds.IncentiveItemsSold).HasDefaultValue(0);
+        builder.Property(ds => ds.IncentiveAchieved).HasDefaultValue(false);
     }
 }

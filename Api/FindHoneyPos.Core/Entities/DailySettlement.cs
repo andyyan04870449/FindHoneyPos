@@ -11,5 +11,10 @@ public class DailySettlement
     public string? DeviceId { get; set; }
     public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
 
+    // 激勵相關欄位
+    public int IncentiveTarget { get; set; }
+    public int IncentiveItemsSold { get; set; }
+    public bool IncentiveAchieved { get; set; }
+
     public ICollection<InventoryCount> InventoryCounts { get; set; } = new List<InventoryCount>();
 }

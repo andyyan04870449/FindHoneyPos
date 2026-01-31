@@ -1,22 +1,17 @@
-import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Switch } from "./ui/switch";
-import { 
-  Settings, 
-  Smartphone, 
-  Database, 
-  Download, 
+import {
+  Settings,
+  Smartphone,
+  Database,
+  Download,
   Trash2,
   Wifi,
   WifiOff,
-  TrendingUp
 } from "lucide-react";
 import { logger } from "../utils/logger";
 
@@ -28,37 +23,18 @@ interface SettingsDialogProps {
   menuVersion: string;
   unsyncedCount: number;
   onSyncData: () => void;
-  incentiveEnabled: boolean;
-  incentiveTarget: number;
-  onIncentiveToggle: (enabled: boolean) => void;
-  onIncentiveTargetChange: (target: number) => void;
 }
 
-export function SettingsDialog({ 
+export function SettingsDialog({
   open,
   onOpenChange,
-  isOnline, 
-  deviceId, 
-  menuVersion, 
+  isOnline,
+  deviceId,
+  menuVersion,
   unsyncedCount,
   onSyncData,
-  incentiveEnabled,
-  incentiveTarget,
-  onIncentiveToggle,
-  onIncentiveTargetChange
 }: SettingsDialogProps) {
   const logs = logger.getLogs();
-  const [tempTarget, setTempTarget] = useState(incentiveTarget.toString());
-
-  const handleIncentiveTargetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setTempTarget(value);
-    
-    const numValue = parseInt(value);
-    if (!isNaN(numValue) && numValue > 0) {
-      onIncentiveTargetChange(numValue);
-    }
-  };
 
   const handleExportLogs = () => {
     const logData = logger.exportLogs();
@@ -93,9 +69,8 @@ export function SettingsDialog({
         </DialogHeader>
 
         <Tabs defaultValue="status" className="flex-1">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="status">系統狀態</TabsTrigger>
-            <TabsTrigger value="incentive">激勵進度</TabsTrigger>
             <TabsTrigger value="logs">操作日誌</TabsTrigger>
             <TabsTrigger value="sync">資料同步</TabsTrigger>
           </TabsList>
@@ -248,58 +223,6 @@ export function SettingsDialog({
             </div>
           </TabsContent>
 
-          <TabsContent value="incentive" className="mt-4">
-            <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-teal-50 rounded-lg border-2 border-teal-200">
-                <div>
-                  <h3 className="font-bold flex items-center gap-2 text-teal-900">
-                    <TrendingUp className="h-5 w-5" />
-                    激勵進度系統
-                  </h3>
-                  <p className="text-sm text-teal-700 mt-1">
-                    啟用後，系統會在頂部顯示進度條，以實際收錢的商品數量計算
-                  </p>
-                </div>
-                <Switch 
-                  checked={incentiveEnabled}
-                  onCheckedChange={onIncentiveToggle}
-                  className="data-[state=checked]:bg-teal-600"
-                />
-              </div>
-
-              {incentiveEnabled && (
-                <div className="space-y-4 animate-in fade-in duration-300">
-                  <div className="space-y-3">
-                    <Label htmlFor="incentiveTarget" className="text-base font-medium">
-                      每日銷售目標（個）
-                    </Label>
-                    <Input 
-                      id="incentiveTarget"
-                      value={tempTarget}
-                      onChange={handleIncentiveTargetChange}
-                      type="number"
-                      min="0"
-                      className="text-lg h-12"
-                      placeholder="請輸入目標數量"
-                    />
-                    <p className="text-sm text-gray-500">
-                      設定每日需售出的商品數量目標，達成後員工可獲得獎勵
-                    </p>
-                  </div>
-
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    <h4 className="font-medium mb-3">功能說明</h4>
-                    <ul className="text-sm text-gray-600 space-y-2">
-                      <li>✓ 進度條會顯示在頂部狀態列下方</li>
-                      <li>✓ 只計算實際收錢的訂單（贈送單不計算）</li>
-                      <li>✓ 達成目標時會顯示慶祝動畫</li>
-                      <li>✓ 日結帳時會顯示當天的進度統計</li>
-                    </ul>
-                  </div>
-                </div>
-              )}
-            </div>
-          </TabsContent>
         </Tabs>
       </DialogContent>
     </Dialog>

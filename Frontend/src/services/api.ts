@@ -1,4 +1,11 @@
 import { logger } from '../utils/logger';
+
+export class ApiError extends Error {
+  constructor(message: string, public status: number) {
+    super(message);
+  }
+}
+
 import type {
   Addon,
   ApiResponse,
@@ -13,6 +20,7 @@ import type {
   SyncStatusResponse,
   SystemStatus,
   PendingOrder,
+  IncentiveSettingsResponse,
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL as string | undefined;
@@ -72,7 +80,7 @@ async function fetchApi<T>(
   if (!response.ok) {
     const errorText = await response.text().catch(() => '');
     logger.error(`API 錯誤 [${response.status}] ${endpoint}`, { errorText });
-    throw new Error(`API 錯誤: ${response.status} ${response.statusText}`);
+    throw new ApiError(`API 錯誤: ${response.status} ${response.statusText}`, response.status);
   }
 
   const json: ApiResponse<T> = await response.json();
@@ -191,5 +199,10 @@ export const posApi = {
     return fetchApi<SyncStatusResponse>(
       `/api/pos/sync/status?deviceId=${encodeURIComponent(deviceId)}`
     );
+  },
+
+  /** 取得激勵設定 */
+  getIncentiveSettings(): Promise<IncentiveSettingsResponse> {
+    return fetchApi<IncentiveSettingsResponse>('/api/pos/incentive/settings');
   },
 };

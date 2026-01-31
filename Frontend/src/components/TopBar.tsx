@@ -14,10 +14,6 @@ interface TopBarProps {
   onUpdateMenu: () => void;
   onSyncData: () => void;
   onOpenSettlement: () => void;
-  incentiveEnabled: boolean;
-  incentiveTarget: number;
-  onIncentiveToggle: (enabled: boolean) => void;
-  onIncentiveTargetChange: (target: number) => void;
   userName?: string;
   onLogout?: () => void;
 }
@@ -31,10 +27,6 @@ export function TopBar({
   onUpdateMenu,
   onSyncData,
   onOpenSettlement,
-  incentiveEnabled,
-  incentiveTarget,
-  onIncentiveToggle,
-  onIncentiveTargetChange,
   userName,
   onLogout,
 }: TopBarProps) {
@@ -216,10 +208,6 @@ export function TopBar({
         menuVersion={menuVersion}
         unsyncedCount={unsyncedCount}
         onSyncData={onSyncData}
-        incentiveEnabled={incentiveEnabled}
-        incentiveTarget={incentiveTarget}
-        onIncentiveToggle={onIncentiveToggle}
-        onIncentiveTargetChange={onIncentiveTargetChange}
       />
     </>
   );

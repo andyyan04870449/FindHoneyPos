@@ -28,14 +28,18 @@ public class InventoryController : ControllerBase
             {
                 ProductId = kv.Key,
                 Quantity = kv.Value
-            }).ToList()
+            }).ToList(),
+            IncentiveTarget = request.IncentiveTarget ?? 0,
+            IncentiveItemsSold = request.IncentiveItemsSold ?? 0,
+            IncentiveAchieved = request.IncentiveAchieved ?? false
         };
 
         var result = await _settlementService.SubmitAsync(settlement);
         return Ok(ApiResponse<SettlementResponse>.Ok(new SettlementResponse(
             result.Id, result.Date.ToString("yyyy-MM-dd"), result.TotalOrders,
             result.TotalRevenue, result.TotalDiscount, result.NetRevenue,
-            result.DeviceId, result.SubmittedAt)));
+            result.DeviceId, result.SubmittedAt,
+            result.IncentiveTarget, result.IncentiveItemsSold, result.IncentiveAchieved)));
     }
 
     [HttpGet("today")]
@@ -51,7 +55,8 @@ public class InventoryController : ControllerBase
             data = new SettlementResponse(
                 settlement.Id, settlement.Date.ToString("yyyy-MM-dd"), settlement.TotalOrders,
                 settlement.TotalRevenue, settlement.TotalDiscount, settlement.NetRevenue,
-                settlement.DeviceId, settlement.SubmittedAt)
+                settlement.DeviceId, settlement.SubmittedAt,
+                settlement.IncentiveTarget, settlement.IncentiveItemsSold, settlement.IncentiveAchieved)
         }));
     }
 }

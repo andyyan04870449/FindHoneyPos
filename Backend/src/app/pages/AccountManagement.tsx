@@ -21,6 +21,13 @@ import {
   TableRow,
 } from '@/app/components/ui/table';
 import { Switch } from '@/app/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/app/components/ui/select';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -34,7 +41,7 @@ export function AccountManagement() {
   const [loading, setLoading] = useState(true);
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
   const [selectedUser, setSelectedUser] = useState<AuthUser | null>(null);
-  const [formData, setFormData] = useState({ username: '', password: '', displayName: '' });
+  const [formData, setFormData] = useState({ username: '', password: '', displayName: '', role: 'PosUser' });
   const [newPassword, setNewPassword] = useState('');
 
   const fetchUsers = useCallback(async () => {
@@ -55,13 +62,13 @@ export function AccountManagement() {
   const handleCreate = () => {
     setDialogMode('create');
     setSelectedUser(null);
-    setFormData({ username: '', password: '', displayName: '' });
+    setFormData({ username: '', password: '', displayName: '', role: 'PosUser' });
   };
 
   const handleEdit = (user: AuthUser) => {
     setDialogMode('edit');
     setSelectedUser(user);
-    setFormData({ username: user.username, password: '', displayName: user.displayName });
+    setFormData({ username: user.username, password: '', displayName: user.displayName, role: user.role });
   };
 
   const handleResetPassword = (user: AuthUser) => {
@@ -163,6 +170,7 @@ export function AccountManagement() {
             <TableRow>
               <TableHead>帳號</TableHead>
               <TableHead>顯示名稱</TableHead>
+              <TableHead>角色</TableHead>
               <TableHead>狀態</TableHead>
               <TableHead>建立時間</TableHead>
               <TableHead>最後登入</TableHead>
@@ -174,6 +182,12 @@ export function AccountManagement() {
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.username}</TableCell>
                 <TableCell>{user.displayName}</TableCell>
+                <TableCell>
+                  <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}
+                    className={user.role === 'Admin' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}>
+                    {user.role === 'Admin' ? '管理員' : 'POS 人員'}
+                  </Badge>
+                </TableCell>
                 <TableCell>
                   <Badge variant={user.isActive ? 'default' : 'secondary'}
                     className={user.isActive ? 'bg-green-100 text-green-700' : ''}>
@@ -223,6 +237,18 @@ export function AccountManagement() {
             <div>
               <Label>密碼</Label>
               <Input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="至少 6 個字元" />
+            </div>
+            <div>
+              <Label>角色</Label>
+              <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Admin">管理員</SelectItem>
+                  <SelectItem value="PosUser">POS 人員</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

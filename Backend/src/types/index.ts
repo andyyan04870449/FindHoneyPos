@@ -115,6 +115,7 @@ export interface AuthUser {
   username: string;
   displayName: string;
   isActive: boolean;
+  role: string;
   createdAt: string;
   lastLoginAt?: string;
 }
@@ -136,4 +137,19 @@ export interface AuditLogEntry {
   detail?: string;
   ipAddress?: string;
   createdAt: string;
+}
+
+export interface IncentiveSettings {
+  isEnabled: boolean;
+  dailyTarget: number;
+  updatedAt: string;
+}
+
+export interface IncentiveHistory {
+  id: number;
+  date: string;
+  target: number;
+  itemsSold: number;
+  achieved: boolean;
+  submittedAt: string;
 }

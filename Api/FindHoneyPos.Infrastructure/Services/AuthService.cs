@@ -41,6 +41,7 @@ public class AuthService : IAuthService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
             DisplayName = displayName,
             IsActive = true,
+            Role = UserRole.Admin,
             LastLoginAt = DateTime.UtcNow,
         };
 
@@ -83,7 +84,7 @@ public class AuthService : IAuthService
         return true;
     }
 
-    public async Task<AdminUser> CreateUserAsync(string username, string password, string displayName)
+    public async Task<AdminUser> CreateUserAsync(string username, string password, string displayName, UserRole role)
     {
         if (await _db.AdminUsers.AnyAsync(u => u.Username == username))
             throw new InvalidOperationException("帳號已存在");
@@ -94,6 +95,7 @@ public class AuthService : IAuthService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
             DisplayName = displayName,
             IsActive = true,
+            Role = role,
         };
 
         _db.AdminUsers.Add(user);
@@ -163,6 +165,7 @@ public class AuthService : IAuthService
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim("name", user.DisplayName),
             new Claim("username", user.Username),
+            new Claim("role", user.Role.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
 
