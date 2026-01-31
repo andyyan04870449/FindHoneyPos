@@ -33,19 +33,9 @@ jobs:
           npm run build
 
       # Docker build and deploy
-      - name: Fix Docker credential store for non-interactive session
-        run: |
-          # Replace "desktop" credsStore with empty string to avoid Keychain access
-          sed -i.bak 's/"credsStore":.*"desktop"/"credsStore": ""/' ~/.docker/config.json
-
       - name: Build Docker images
         timeout-minutes: 10
         run: docker compose build
-
-      - name: Restore Docker config
-        if: always()
-        run: |
-          [ -f ~/.docker/config.json.bak ] && mv ~/.docker/config.json.bak ~/.docker/config.json || true
 
       - name: Stop existing containers
         run: docker compose down --timeout 30
