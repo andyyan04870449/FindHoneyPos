@@ -65,12 +65,12 @@ jobs:
           echo "Backend health check failed"
           exit 1
 
-      # Restart ngrok tunnels
+      # Restart ngrok tunnels (managed by launchd so it survives job cleanup)
       - name: Restart ngrok
         run: |
-          pkill -f ngrok || true
+          launchctl unload ~/Library/LaunchAgents/com.ngrok.agent.plist 2>/dev/null || true
           sleep 2
-          nohup ngrok start --all > /dev/null 2>&1 &
+          launchctl load ~/Library/LaunchAgents/com.ngrok.agent.plist
           sleep 5
           # Verify tunnels are up
           TUNNEL_COUNT=$(curl -s http://127.0.0.1:4040/api/tunnels | python3 -c "import sys,json; print(len(json.load(sys.stdin)['tunnels']))")
