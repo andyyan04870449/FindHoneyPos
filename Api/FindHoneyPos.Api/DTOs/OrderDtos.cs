@@ -16,7 +16,10 @@ public record CreateOrderItemRequest(
     string ProductName,
     decimal Price,
     int Quantity,
-    List<CreateOrderItemAddonRequest>? Addons = null
+    List<CreateOrderItemAddonRequest>? Addons = null,
+    bool? IsGift = null,
+    decimal? OriginalPrice = null,
+    string? ItemDiscountLabel = null
 );
 
 public record CreateOrderItemAddonRequest(
@@ -55,7 +58,10 @@ public record OrderItemResponse(
     decimal Price,
     int Quantity,
     decimal Subtotal,
-    List<OrderItemAddonResponse> Addons
+    List<OrderItemAddonResponse> Addons,
+    bool IsGift = false,
+    decimal? OriginalPrice = null,
+    string? ItemDiscountLabel = null
 );
 
 public record OrderItemAddonResponse(

@@ -34,6 +34,9 @@ function buildCreateOrderRequest(
           productName: a.name,
           price: a.price,
         })),
+        isGift: item.isGift || undefined,
+        originalPrice: item.originalPrice != null ? item.originalPrice - addonTotal : undefined,
+        itemDiscountLabel: item.itemDiscountLabel || undefined,
       };
     }),
     discountType: discountInfo.discountAmount > 0 ? discountInfo.type : undefined,

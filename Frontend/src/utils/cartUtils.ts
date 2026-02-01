@@ -1,5 +1,17 @@
 import type { SelectedAddon } from '../types';
 
+let _uniqueCounter = 0;
+
+/**
+ * 產生不會被合併的唯一購物車品項 ID
+ * 格式: {baseId}__{suffix}_{timestamp}_{counter}
+ * 雙底線區隔避免與加料 ID 衝突
+ */
+export function generateUniqueCartItemId(baseId: string, suffix: string): string {
+  _uniqueCounter++;
+  return `${baseId}__${suffix}_${Date.now()}_${_uniqueCounter}`;
+}
+
 /**
  * 產生購物車品項唯一 ID
  * 無加料: "3"

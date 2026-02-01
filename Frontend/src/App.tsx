@@ -51,9 +51,9 @@ export default function App() {
 
   const isOnline = useOnlineStatus();
 
-  const { products, refetchProducts } = useProducts(isOnline);
-  const { addons } = useAddons();
-  const { discounts } = useDiscounts();
+  const { products, refetchProducts } = useProducts(isOnline, isAuthenticated);
+  const { addons } = useAddons(isAuthenticated);
+  const { discounts } = useDiscounts(isAuthenticated);
 
   const {
     orderItems,
@@ -275,7 +275,7 @@ export default function App() {
       });
   }, [isOnline, setCompletedOrders]);
 
-  // 處理庫存盤點確認，然後打開日結帳
+  // 處理庫存盤點確認，然後打開關班作業
   const handleInventoryConfirm = useCallback((inventory: InventoryData) => {
     setInventoryData(inventory);
     setInventoryCountOpen(false);
@@ -283,13 +283,13 @@ export default function App() {
     setSettlementOpen(true);
   }, []);
 
-  // 從日結帳返回庫存盤點
+  // 從關班作業返回庫存盤點
   const handleBackToInventory = useCallback(() => {
     setSettlementOpen(false);
     setInventoryCountOpen(true);
   }, []);
 
-  // 最終提交（日結帳確認）
+  // 最終提交（關班作業確認）
   const handleFinalSubmit = useCallback(
     async (inventory: InventoryData) => {
       // 計算激勵資料
@@ -315,7 +315,7 @@ export default function App() {
       }
 
       if (isOnline) {
-        toast.loading("正在提交日結帳...");
+        toast.loading("正在提交關班作業...");
         try {
           if (currentShift) {
             // 使用班次關班 API
@@ -338,16 +338,16 @@ export default function App() {
             });
           }
           toast.dismiss();
-          toast.success("日結帳已完成並記錄！");
-          logger.userAction('日結帳提交成功');
+          toast.success("關班作業已完成並記錄！");
+          logger.userAction('關班作業提交成功');
         } catch (err) {
           toast.dismiss();
-          toast.error("日結帳提交失敗，請稍後重試");
-          logger.error('日結帳提交失敗', { error: String(err) });
+          toast.error("關班作業提交失敗，請稍後重試");
+          logger.error('關班作業提交失敗', { error: String(err) });
         }
       } else {
-        toast.success("日結帳已暫存，待網路恢復後同步");
-        logger.userAction('日結帳離線暫存', { inventory });
+        toast.success("關班作業已暫存，待網路恢復後同步");
+        logger.userAction('關班作業離線暫存', { inventory });
       }
     },
     [completedOrders, isOnline, deviceId, incentiveEnabled, incentiveTarget, currentShift, todayItemsSold, setCompletedOrders]
@@ -489,6 +489,7 @@ export default function App() {
         items={orderItems}
         discounts={discounts}
         onConfirmCheckout={handleConfirmCheckout}
+        onModifyItems={(newItems) => setOrderItems(newItems)}
       />
 
       <InventoryCountDialog
@@ -502,7 +503,7 @@ export default function App() {
       <TodayOrdersDialog
         open={todayOrdersOpen}
         onOpenChange={setTodayOrdersOpen}
-        orders={completedOrders}
+        shiftId={currentShift?.id ?? null}
       />
 
       <DailySettlementDialog

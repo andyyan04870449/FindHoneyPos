@@ -6,6 +6,8 @@ import { Separator } from "./ui/separator";
 import { Badge } from "./ui/badge";
 import { X, Percent, DollarSign, Gift, Users } from "lucide-react";
 import type { OrderItem, DiscountInfo, DiscountType, PosDiscount } from '../types';
+import { ItemActionPanel } from './ItemActionPanel';
+import { useItemActions } from '../hooks/useItemActions';
 
 const GENDER_TAGS = ['男', '女'] as const;
 const AGE_TAGS = ['成人', '學生'] as const;
@@ -16,6 +18,7 @@ interface CheckoutPanelProps {
   items: OrderItem[];
   discounts: PosDiscount[];
   onConfirmCheckout: (discountInfo: DiscountInfo) => void;
+  onModifyItems?: (items: OrderItem[]) => void;
 }
 
 export function CheckoutPanel({
@@ -23,13 +26,20 @@ export function CheckoutPanel({
   onOpenChange,
   items,
   discounts,
-  onConfirmCheckout
+  onConfirmCheckout,
+  onModifyItems,
 }: CheckoutPanelProps) {
   const [discountType, setDiscountType] = useState<DiscountType | null>(null);
   const [customPercentage, setCustomPercentage] = useState('');
   const [customAmount, setCustomAmount] = useState('');
   const [genderTag, setGenderTag] = useState('');
   const [ageTag, setAgeTag] = useState('');
+  const [selectedCartItemId, setSelectedCartItemId] = useState<string | null>(null);
+
+  const { giftItem, splitItem, changeItemPrice } = useItemActions({
+    orderItems: items,
+    setOrderItems: (newItems) => onModifyItems?.(newItems),
+  });
 
   // 計算原始總金額
   const originalTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -95,6 +105,7 @@ export function CheckoutPanel({
     setDiscountType(null);
     setGenderTag('');
     setAgeTag('');
+    setSelectedCartItemId(null);
   };
 
   const handleCancel = () => {
@@ -105,6 +116,7 @@ export function CheckoutPanel({
     setDiscountType(null);
     setGenderTag('');
     setAgeTag('');
+    setSelectedCartItemId(null);
   };
 
   return (
@@ -120,29 +132,61 @@ export function CheckoutPanel({
             <h3 className="text-2xl font-semibold mb-4">訂單明細</h3>
             <div className="bg-gray-50 rounded-xl p-6 flex-1 flex flex-col overflow-hidden">
               <div className="flex-1 overflow-y-auto space-y-3 mb-4">
-                {items.map((item) => (
-                  <div key={item.cartItemId} className="flex items-center justify-between py-4 px-4 bg-white rounded-lg">
-                    <div className="flex-1 min-w-0">
-                      <span className="font-medium text-gray-900 truncate block text-xl">{item.name}</span>
-                      {item.addons && item.addons.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {item.addons.map(addon => (
-                            <Badge key={addon.id} variant="secondary" className="text-xs">
-                              {addon.name} +{addon.price}
-                            </Badge>
-                          ))}
+                {items.map((item) => {
+                  const isSelected = selectedCartItemId === item.cartItemId;
+                  return (
+                    <div key={item.cartItemId} className="space-y-2">
+                      <div
+                        onClick={() => onModifyItems && setSelectedCartItemId(prev => prev === item.cartItemId ? null : item.cartItemId)}
+                        className={`flex items-center justify-between py-4 px-4 bg-white rounded-lg transition-all ${
+                          onModifyItems ? 'cursor-pointer hover:bg-gray-50' : ''
+                        } ${isSelected ? 'ring-2 ring-brand-orange bg-orange-50/50' : ''}`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-900 truncate text-xl">{item.name}</span>
+                            {item.isGift && (
+                              <Badge className="bg-green-100 text-green-700 text-xs">贈送</Badge>
+                            )}
+                            {item.itemDiscountLabel && !item.isGift && (
+                              <Badge className="bg-purple-100 text-purple-700 text-xs">{item.itemDiscountLabel}</Badge>
+                            )}
+                          </div>
+                          {item.addons && item.addons.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {item.addons.map(addon => (
+                                <Badge key={addon.id} variant="secondary" className="text-xs">
+                                  {addon.name} +{addon.price}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
                         </div>
+                        <div className="flex items-center gap-8 text-lg shrink-0">
+                          <span className={`w-28 text-right ${item.isGift ? 'text-green-600 line-through' : 'text-gray-600'}`}>
+                            NT$ {item.isGift ? (item.originalPrice ?? 0) : item.price}
+                          </span>
+                          {item.isGift && (
+                            <span className="text-green-600 font-medium w-16 text-right">NT$ 0</span>
+                          )}
+                          <span className="text-gray-600 w-16 text-center">x {item.quantity}</span>
+                          <span className="font-semibold text-gray-900 w-32 text-right">
+                            NT$ {item.price * item.quantity}
+                          </span>
+                        </div>
+                      </div>
+                      {isSelected && onModifyItems && (
+                        <ItemActionPanel
+                          item={item}
+                          discounts={discounts}
+                          onGift={giftItem}
+                          onSplit={splitItem}
+                          onChangePrice={changeItemPrice}
+                        />
                       )}
                     </div>
-                    <div className="flex items-center gap-8 text-lg shrink-0">
-                      <span className="text-gray-600 w-28 text-right">NT$ {item.price}</span>
-                      <span className="text-gray-600 w-16 text-center">x {item.quantity}</span>
-                      <span className="font-semibold text-gray-900 w-32 text-right">
-                        NT$ {item.price * item.quantity}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <Separator className="my-4" />
               <div className="space-y-3">
@@ -248,7 +292,7 @@ export function CheckoutPanel({
 
             {/* 折扣類型選擇 */}
             <div className="mb-5">
-              <h3 className="text-2xl font-semibold mb-4">折扣類型</h3>
+              <h3 className="text-2xl font-semibold mb-4">整單折扣</h3>
               <div className="grid grid-cols-3 gap-4">
                 <button
                   onClick={() => { setDiscountType(prev => prev === 'percentage' ? null : 'percentage'); setCustomPercentage(''); }}

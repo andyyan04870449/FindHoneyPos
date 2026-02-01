@@ -2,7 +2,8 @@ export interface Product {
   id: string;
   name: string;
   price: number;
-  isPopular?: boolean;
+  isOnPromotion?: boolean;
+  promotionPrice?: number;
 }
 
 export interface Addon {
@@ -24,6 +25,10 @@ export interface OrderItem {
   price: number;
   quantity: number;
   addons?: SelectedAddon[];
+  isGift?: boolean;
+  originalPrice?: number;
+  itemDiscountLabel?: string;
+  splitSource?: string;
 }
 
 export type DiscountType = 'percentage' | 'amount' | 'gift';
@@ -87,6 +92,9 @@ export interface CreateOrderRequest {
     price: number;
     quantity: number;
     addons?: { productId: number; productName: string; price: number }[];
+    isGift?: boolean;
+    originalPrice?: number;
+    itemDiscountLabel?: string;
   }[];
   discountType?: string;
   discountValue?: number;
@@ -183,4 +191,37 @@ export interface CloseShiftRequest {
 export interface CloseShiftResponse {
   shift: ShiftResponse;
   settlement: SettlementResponse;
+}
+
+// --- 班次訂單 ---
+
+export interface ShiftOrderAddon {
+  name: string;
+  price: number;
+}
+
+export interface ShiftOrderItem {
+  name: string;
+  price: number;
+  quantity: number;
+  subtotal: number;
+  addons: ShiftOrderAddon[];
+  isGift: boolean;
+  originalPrice?: number;
+  itemDiscountLabel?: string;
+}
+
+export interface ShiftOrder {
+  id: number;
+  orderNumber: string;
+  timestamp: string;
+  items: ShiftOrderItem[];
+  subtotal: number;
+  discountAmount: number;
+  discountType: string | null;
+  discountValue: number | null;
+  total: number;
+  status: string;
+  paymentMethod: string;
+  customerTag: string | null;
 }

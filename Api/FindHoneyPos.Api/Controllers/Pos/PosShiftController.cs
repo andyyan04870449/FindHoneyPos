@@ -12,10 +12,12 @@ using Microsoft.AspNetCore.Mvc;
 public class PosShiftController : ControllerBase
 {
     private readonly IShiftService _shiftService;
+    private readonly IOrderService _orderService;
 
-    public PosShiftController(IShiftService shiftService)
+    public PosShiftController(IShiftService shiftService, IOrderService orderService)
     {
         _shiftService = shiftService;
+        _orderService = orderService;
     }
 
     [HttpPost("open")]
@@ -76,6 +78,36 @@ public class PosShiftController : ControllerBase
         {
             return BadRequest(ApiResponse<object>.Fail(ex.Message));
         }
+    }
+
+    [HttpGet("{id}/orders")]
+    public async Task<IActionResult> GetOrders(int id)
+    {
+        var shift = await _shiftService.GetByIdAsync(id);
+        if (shift == null)
+            return NotFound(ApiResponse<object>.Fail("班次不存在"));
+
+        var orders = await _orderService.GetByShiftIdAsync(id);
+        var response = orders.Select(o => new OrderResponse(
+            o.Id,
+            o.OrderNumber,
+            o.Timestamp,
+            o.Items.Select(i => new OrderItemResponse(
+                i.ProductName, i.Price, i.Quantity, i.Subtotal,
+                i.Addons.Select(a => new OrderItemAddonResponse(a.ProductName, a.Price)).ToList(),
+                i.IsGift, i.OriginalPrice, i.ItemDiscountLabel
+            )).ToList(),
+            o.Subtotal,
+            o.DiscountAmount,
+            o.DiscountType?.ToString()?.ToLower(),
+            o.DiscountValue,
+            o.Total,
+            o.Status.ToString().ToLower(),
+            Core.Constants.PaymentMethodMapping.ToDisplay(o.PaymentMethod),
+            o.CustomerTag
+        ));
+
+        return Ok(ApiResponse<IEnumerable<OrderResponse>>.Ok(response));
     }
 
     private static ShiftResponse MapToResponse(Shift shift) => new(
