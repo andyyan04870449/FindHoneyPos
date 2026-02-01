@@ -106,11 +106,7 @@ export interface BatchSyncResponse {
 
 export interface SubmitSettlementRequest {
   deviceId: string;
-  date: string;
-  inventory: InventoryData;
-  totalOrders: number;
-  totalRevenue: number;
-  totalDiscount: number;
+  inventoryCounts: Record<number, number>;
   incentiveTarget?: number;
   incentiveItemsSold?: number;
   incentiveAchieved?: boolean;
@@ -155,4 +151,36 @@ export interface IncentiveSettingsResponse {
   isEnabled: boolean;
   dailyTarget: number;
   updatedAt: string;
+}
+
+// --- 班次相關型別 ---
+
+export interface ShiftResponse {
+  id: number;
+  deviceId: string | null;
+  status: string;
+  openedAt: string;
+  closedAt: string | null;
+  totalOrders: number;
+  totalRevenue: number;
+  totalDiscount: number;
+  netRevenue: number;
+  settlementId: number | null;
+}
+
+export interface ShiftStatusResponse {
+  hasOpenShift: boolean;
+  shift: ShiftResponse | null;
+}
+
+export interface CloseShiftRequest {
+  inventoryCounts: Record<number, number>;
+  incentiveTarget?: number;
+  incentiveItemsSold?: number;
+  incentiveAchieved?: boolean;
+}
+
+export interface CloseShiftResponse {
+  shift: ShiftResponse;
+  settlement: SettlementResponse;
 }

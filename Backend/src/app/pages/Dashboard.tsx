@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, ShoppingCart, DollarSign, Package, Loader2, Plus, Percent, Users, BarChart3 } from 'lucide-react';
+import { TrendingUp, ShoppingCart, DollarSign, Package, Loader2, Plus, Percent, Users, BarChart3, FileText } from 'lucide-react';
 import { Card } from '@/app/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/app/components/ui/tabs';
 import {
@@ -20,6 +20,7 @@ import {
 } from 'recharts';
 import { api } from '@/lib/api';
 import type { TopProduct } from '@/types';
+import { DailyReport } from '@/app/pages/DailyReport';
 
 interface KPIItem {
   title: string;
@@ -66,6 +67,12 @@ interface CustomerTagKpi {
   age: TagStat[];
 }
 
+interface InventorySummaryItem {
+  productName: string;
+  soldQuantity: number;
+  remainingQuantity: number;
+}
+
 const kpiIcons = [DollarSign, ShoppingCart, Package, TrendingUp];
 const addonKpiIcons = [DollarSign, Plus, Percent];
 const GENDER_COLORS = ['#3b82f6', '#ec4899', '#9ca3af'];
@@ -80,6 +87,7 @@ export function Dashboard() {
   const [topAddons, setTopAddons] = useState<TopAddon[]>([]);
   const [addonCombinations, setAddonCombinations] = useState<AddonCombination[]>([]);
   const [customerTagKpi, setCustomerTagKpi] = useState<CustomerTagKpi | null>(null);
+  const [inventorySummary, setInventorySummary] = useState<InventorySummaryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -115,6 +123,12 @@ export function Dashboard() {
         setCustomerTagKpi(tagKpi);
       } catch (err) {
         console.error('Failed to fetch customer tag data:', err);
+      }
+      try {
+        const inventory = await api<InventorySummaryItem[]>('/api/admin/reports/inventory-summary?date=today');
+        setInventorySummary(inventory);
+      } catch (err) {
+        console.error('Failed to fetch inventory summary:', err);
       }
       setLoading(false);
     }
@@ -153,6 +167,14 @@ export function Dashboard() {
         <TabsTrigger value="customer">
           <Users className="h-4 w-4 mr-1" />
           客群分析
+        </TabsTrigger>
+        <TabsTrigger value="daily-report">
+          <FileText className="h-4 w-4 mr-1" />
+          日報分析
+        </TabsTrigger>
+        <TabsTrigger value="inventory">
+          <Package className="h-4 w-4 mr-1" />
+          庫存分析
         </TabsTrigger>
       </TabsList>
 
@@ -544,6 +566,65 @@ export function Dashboard() {
             <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
             <p className="text-lg font-medium">尚無客群資料</p>
             <p className="text-sm mt-1">結帳時標記客群後即可在此檢視分析</p>
+          </Card>
+        )}
+      </TabsContent>
+
+      {/* ===== 日報分析 ===== */}
+      <TabsContent value="daily-report">
+        <DailyReport />
+      </TabsContent>
+
+      {/* ===== 庫存分析 ===== */}
+      <TabsContent value="inventory" className="space-y-6">
+        {inventorySummary.length > 0 ? (
+          <>
+            {/* 售出 vs 剩餘 雙 BarChart */}
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4">售出 vs 剩餘對照</h3>
+              <ResponsiveContainer width="100%" height={350}>
+                <BarChart data={inventorySummary}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="productName" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="soldQuantity" fill="#3b82f6" name="售出數量" />
+                  <Bar dataKey="remainingQuantity" fill="#10b981" name="剩餘數量" />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+
+            {/* 明細表格 */}
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4">庫存明細</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">品項</th>
+                      <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">售出</th>
+                      <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">剩餘</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inventorySummary.map((item) => (
+                      <tr key={item.productName} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4 font-medium">{item.productName}</td>
+                        <td className="py-3 px-4 text-right text-blue-600 font-semibold">{item.soldQuantity}</td>
+                        <td className="py-3 px-4 text-right text-emerald-600 font-semibold">{item.remainingQuantity}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </>
+        ) : (
+          <Card className="p-12 text-center text-gray-500">
+            <Package className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <p className="text-lg font-medium">尚無庫存資料</p>
+            <p className="text-sm mt-1">完成日結盤點後即可在此檢視庫存分析</p>
           </Card>
         )}
       </TabsContent>

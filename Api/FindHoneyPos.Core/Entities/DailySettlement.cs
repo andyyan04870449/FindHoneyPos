@@ -17,4 +17,7 @@ public class DailySettlement
     public bool IncentiveAchieved { get; set; }
 
     public ICollection<InventoryCount> InventoryCounts { get; set; } = new List<InventoryCount>();
+
+    // 班次反向參考（1:1）
+    public Shift? Shift { get; set; }
 }

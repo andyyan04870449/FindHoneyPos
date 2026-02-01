@@ -161,6 +161,91 @@ export function CheckoutPanel({
 
           {/* 右側：折扣設定與結算 */}
           <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+            {/* 客群分析 */}
+            <div className="mb-5">
+              <h4 className="text-xl font-medium mb-3">客群分析</h4>
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  {GENDER_TAGS.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => setGenderTag(prev => prev === tag ? '' : tag)}
+                      className={`flex-1 h-16 rounded-xl border-2 text-xl font-medium transition-all active:scale-95 ${
+                        genderTag === tag
+                          ? 'border-brand-orange bg-orange-50 text-brand-orange'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-3">
+                  {AGE_TAGS.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => setAgeTag(prev => prev === tag ? '' : tag)}
+                      className={`flex-1 h-16 rounded-xl border-2 text-xl font-medium transition-all active:scale-95 ${
+                        ageTag === tag
+                          ? 'border-brand-orange bg-orange-50 text-brand-orange'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 結算顯示 */}
+            <div className="bg-gray-900 text-white rounded-xl p-6 space-y-4 mb-5">
+              <div className="flex justify-between items-center text-xl">
+                <span className="text-gray-300">原價</span>
+                <span>NT$ {originalTotal}</span>
+              </div>
+
+              {discount.discountAmount > 0 && (
+                <>
+                  <div className="flex justify-between items-center text-xl">
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-300">折扣</span>
+                      <Badge className="bg-brand-orange text-white text-base px-3 py-1">
+                        {discount.label}
+                      </Badge>
+                    </div>
+                    <span className="text-red-400">- NT$ {discount.discountAmount}</span>
+                  </div>
+                  <Separator className="bg-gray-700" />
+                </>
+              )}
+
+              <div className="flex justify-between items-center">
+                <span className="text-2xl font-medium">實付金額</span>
+                <span className="text-5xl font-bold text-brand-orange">
+                  NT$ {discount.finalTotal}
+                </span>
+              </div>
+            </div>
+
+            {/* 操作按鈕 */}
+            <div className="flex gap-5 mb-5">
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+                className="flex-1 h-16 text-xl border-2"
+              >
+                取消
+              </Button>
+              <Button
+                onClick={handleConfirm}
+                className="flex-[2] h-16 text-xl bg-brand-orange hover:bg-brand-orange-dark text-white"
+                disabled={items.length === 0}
+              >
+                確認結帳
+              </Button>
+            </div>
+
             {/* 折扣類型選擇 */}
             <div className="mb-5">
               <h3 className="text-2xl font-semibold mb-4">折扣類型</h3>
@@ -308,91 +393,6 @@ export function CheckoutPanel({
                   </p>
                 </div>
               )}
-            </div>
-
-            {/* 結算顯示 */}
-            <div className="bg-gray-900 text-white rounded-xl p-6 space-y-4 mb-5">
-              <div className="flex justify-between items-center text-xl">
-                <span className="text-gray-300">原價</span>
-                <span>NT$ {originalTotal}</span>
-              </div>
-              
-              {discount.discountAmount > 0 && (
-                <>
-                  <div className="flex justify-between items-center text-xl">
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-300">折扣</span>
-                      <Badge className="bg-brand-orange text-white text-base px-3 py-1">
-                        {discount.label}
-                      </Badge>
-                    </div>
-                    <span className="text-red-400">- NT$ {discount.discountAmount}</span>
-                  </div>
-                  <Separator className="bg-gray-700" />
-                </>
-              )}
-              
-              <div className="flex justify-between items-center">
-                <span className="text-2xl font-medium">實付金額</span>
-                <span className="text-5xl font-bold text-brand-orange">
-                  NT$ {discount.finalTotal}
-                </span>
-              </div>
-            </div>
-
-            {/* 客群分析 */}
-            <div className="mb-5">
-              <h4 className="text-xl font-medium mb-3">客群分析</h4>
-              <div className="space-y-3">
-                <div className="flex gap-3">
-                  {GENDER_TAGS.map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => setGenderTag(prev => prev === tag ? '' : tag)}
-                      className={`flex-1 h-16 rounded-xl border-2 text-xl font-medium transition-all active:scale-95 ${
-                        genderTag === tag
-                          ? 'border-brand-orange bg-orange-50 text-brand-orange'
-                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex gap-3">
-                  {AGE_TAGS.map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => setAgeTag(prev => prev === tag ? '' : tag)}
-                      className={`flex-1 h-16 rounded-xl border-2 text-xl font-medium transition-all active:scale-95 ${
-                        ageTag === tag
-                          ? 'border-brand-orange bg-orange-50 text-brand-orange'
-                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* 操作按鈕 */}
-            <div className="flex gap-5 mt-auto">
-              <Button
-                variant="outline"
-                onClick={handleCancel}
-                className="flex-1 h-16 text-xl border-2"
-              >
-                取消
-              </Button>
-              <Button
-                onClick={handleConfirm}
-                className="flex-[2] h-16 text-xl bg-brand-orange hover:bg-brand-orange-dark text-white"
-                disabled={items.length === 0}
-              >
-                確認結帳
-              </Button>
             </div>
           </div>
         </div>

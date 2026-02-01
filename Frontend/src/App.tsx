@@ -5,10 +5,12 @@ import { OrderPreview } from "./components/OrderPreview";
 import { MobileCartSheet } from "./components/MobileCartSheet";
 import { CheckoutPanel } from "./components/CheckoutPanel";
 import { DailySettlementDialog } from "./components/DailySettlementDialog";
+import { TodayOrdersDialog } from "./components/TodayOrdersDialog";
 import { IncentiveProgressBar } from "./components/IncentiveProgressBar";
 import { InventoryCountDialog } from "./components/InventoryCountDialog";
 import { ProductCustomizeDialog } from "./components/ProductCustomizeDialog";
 import { PosLoginPage } from "./components/PosLoginPage";
+import { OpenShiftScreen } from "./components/OpenShiftScreen";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 import { useOnlineStatus } from "./hooks/useOnlineStatus";
@@ -24,18 +26,24 @@ import { generateDeviceId } from "./utils/deviceId";
 import { posApi, ApiError } from "./services/api";
 import { orderQueue } from "./services/orderQueue";
 import { MENU_VERSION } from "./constants";
-import type { InventoryData, Product, SelectedAddon, OrderItem } from "./types";
-import { Loader2 } from "lucide-react";
+import type { InventoryData, Product, SelectedAddon, OrderItem, ShiftResponse } from "./types";
+import { Loader2, Trash2 } from "lucide-react";
+import { Card } from "./components/ui/card";
+import { Button } from "./components/ui/button";
+import { Separator } from "./components/ui/separator";
 
 export default function App() {
   const { user, isAuthenticated, isInitialized, isLoading: authLoading, login, logout, register } = useAuth();
 
   const [unsyncedCount, setUnsyncedCount] = useState(() => orderQueue.getCount());
   const [deviceId] = useState(generateDeviceId);
+  const [currentShift, setCurrentShift] = useState<ShiftResponse | null>(null);
+  const [shiftLoading, setShiftLoading] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [settlementOpen, setSettlementOpen] = useState(false);
   const [inventoryCountOpen, setInventoryCountOpen] = useState(false);
   const [inventoryData, setInventoryData] = useState<InventoryData>({});
+  const [todayOrdersOpen, setTodayOrdersOpen] = useState(false);
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [customizeProduct, setCustomizeProduct] = useState<Product | null>(null);
   const [customizeItem, setCustomizeItem] = useState<OrderItem | null>(null);
@@ -57,6 +65,16 @@ export default function App() {
     getProductQuantity,
   } = useCart();
 
+  // 訂單建立後刷新班次統計
+  const refreshShift = useCallback(() => {
+    if (!currentShift) return;
+    posApi.getCurrentShift(deviceId)
+      .then((res) => {
+        if (res.hasOpenShift && res.shift) setCurrentShift(res.shift);
+      })
+      .catch(() => {});
+  }, [currentShift, deviceId]);
+
   const {
     completedOrders,
     setCompletedOrders,
@@ -69,6 +87,7 @@ export default function App() {
     isOnline,
     deviceId,
     setUnsyncedCount,
+    onOrderCreated: refreshShift,
   });
 
   const {
@@ -77,6 +96,40 @@ export default function App() {
   } = useIncentive();
 
   const todayItemsSold = calculateTodayItemsSold();
+
+  // 啟動時載入當前班次
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    setShiftLoading(true);
+    posApi.getCurrentShift(deviceId)
+      .then((res) => {
+        if (res.hasOpenShift && res.shift) {
+          setCurrentShift(res.shift);
+        } else {
+          setCurrentShift(null);
+        }
+      })
+      .catch((err) => {
+        logger.error('載入班次失敗', { error: String(err) });
+      })
+      .finally(() => setShiftLoading(false));
+  }, [isAuthenticated, deviceId]);
+
+  // 開班
+  const handleOpenShift = useCallback(async () => {
+    setShiftLoading(true);
+    try {
+      const shift = await posApi.openShift(deviceId);
+      setCurrentShift(shift);
+      toast.success('班次已開啟');
+      logger.userAction('開班', { shiftId: shift.id });
+    } catch (err) {
+      toast.error(String(err instanceof Error ? err.message : '開班失敗'));
+      logger.error('開班失敗', { error: String(err) });
+    } finally {
+      setShiftLoading(false);
+    }
+  }, [deviceId]);
 
   // 網路恢復時自動同步離線訂單
   useEffect(() => {
@@ -239,41 +292,51 @@ export default function App() {
   // 最終提交（日結帳確認）
   const handleFinalSubmit = useCallback(
     async (inventory: InventoryData) => {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const todayOrders = completedOrders.filter((o) => {
-        const d = new Date(o.timestamp);
-        d.setHours(0, 0, 0, 0);
-        return d.getTime() === today.getTime();
-      });
-
-      const totalRevenue = todayOrders.reduce((s, o) => s + o.total, 0);
-      const totalDiscount = todayOrders.reduce(
-        (s, o) => s + (o.subtotal - o.total),
-        0
-      );
-
       // 計算激勵資料
-      const itemsSold = todayOrders
-        .filter(o => o.total > 0)
-        .reduce((total, o) => total + o.items.reduce((sum, item) => sum + item.quantity, 0), 0);
+      const itemsSold = currentShift
+        ? todayItemsSold
+        : (() => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return completedOrders
+              .filter((o) => {
+                const d = new Date(o.timestamp);
+                d.setHours(0, 0, 0, 0);
+                return d.getTime() === today.getTime() && o.total > 0;
+              })
+              .reduce((total, o) => total + o.items.reduce((sum, item) => sum + item.quantity, 0), 0);
+          })();
       const achieved = incentiveEnabled && incentiveTarget > 0 && itemsSold >= incentiveTarget;
+
+      // 將 inventory key 從 string 轉為 number
+      const inventoryCounts: Record<number, number> = {};
+      for (const [key, value] of Object.entries(inventory)) {
+        inventoryCounts[Number(key)] = value;
+      }
 
       if (isOnline) {
         toast.loading("正在提交日結帳...");
         try {
-          await posApi.submitSettlement({
-            deviceId,
-            date: today.toISOString().slice(0, 10),
-            inventory,
-            totalOrders: todayOrders.length,
-            totalRevenue,
-            totalDiscount,
-            incentiveTarget: incentiveEnabled ? incentiveTarget : 0,
-            incentiveItemsSold: itemsSold,
-            incentiveAchieved: achieved,
-          });
+          if (currentShift) {
+            // 使用班次關班 API
+            await posApi.closeShift(currentShift.id, {
+              inventoryCounts,
+              incentiveTarget: incentiveEnabled ? incentiveTarget : 0,
+              incentiveItemsSold: itemsSold,
+              incentiveAchieved: achieved,
+            });
+            setCurrentShift(null);
+            setCompletedOrders([]);
+          } else {
+            // 舊邏輯（向下相容）
+            await posApi.submitSettlement({
+              deviceId,
+              inventoryCounts,
+              incentiveTarget: incentiveEnabled ? incentiveTarget : 0,
+              incentiveItemsSold: itemsSold,
+              incentiveAchieved: achieved,
+            });
+          }
           toast.dismiss();
           toast.success("日結帳已完成並記錄！");
           logger.userAction('日結帳提交成功');
@@ -287,7 +350,7 @@ export default function App() {
         logger.userAction('日結帳離線暫存', { inventory });
       }
     },
-    [completedOrders, isOnline, deviceId, incentiveEnabled, incentiveTarget]
+    [completedOrders, isOnline, deviceId, incentiveEnabled, incentiveTarget, currentShift, todayItemsSold, setCompletedOrders]
   );
 
   // Auth loading state
@@ -314,8 +377,28 @@ export default function App() {
     );
   }
 
+  // 尚未開班 — 顯示開班畫面
+  if (!currentShift && !shiftLoading) {
+    return (
+      <>
+        <OpenShiftScreen onOpenShift={handleOpenShift} loading={shiftLoading} />
+        <Toaster richColors position="top-center" />
+      </>
+    );
+  }
+
+  // 班次載入中
+  if (shiftLoading && !currentShift) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-gray-50">
+        <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
+        <Toaster richColors position="top-center" />
+      </div>
+    );
+  }
+
   return (
-    <div className="h-screen w-full flex flex-col bg-gray-50 overflow-hidden">
+    <div className="h-[100dvh] w-full flex flex-col bg-gray-50 overflow-hidden">
       <TopBar
         isOnline={isOnline}
         menuVersion={MENU_VERSION}
@@ -325,8 +408,10 @@ export default function App() {
         onUpdateMenu={handleUpdateMenu}
         onSyncData={handleSyncData}
         onOpenSettlement={() => setInventoryCountOpen(true)}
+        onOpenTodayOrders={() => setTodayOrdersOpen(true)}
         userName={user?.displayName}
         onLogout={logout}
+        currentShift={currentShift}
       />
 
       <IncentiveProgressBar
@@ -335,8 +420,8 @@ export default function App() {
         isEnabled={incentiveEnabled}
       />
 
-      <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 min-h-0">
-        <div className="flex-1 lg:w-[55%] min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row gap-2 md:gap-3 lg:gap-4 p-2 md:p-3 lg:p-4 min-h-0">
+        <div className="flex-1 lg:w-[35%] min-h-0">
           <ProductGrid
             products={products}
             onProductClick={handleProductClick}
@@ -344,14 +429,49 @@ export default function App() {
           />
         </div>
 
-        <div className="hidden lg:block lg:w-[45%] min-h-0">
+        <div className="hidden lg:block lg:w-[40%] min-h-0">
           <OrderPreview
             items={orderItems}
             onUpdateQuantity={updateQuantity}
             onClearAll={clearAllItems}
             onOpenCheckout={handleOpenCheckout}
             onCustomize={handleOpenCustomize}
+            showActions={false}
           />
+        </div>
+
+        <div className="hidden lg:flex lg:w-[25%] min-h-0 flex-col gap-4">
+          <Card className="flex-1 flex flex-col justify-between bg-white border border-gray-200 p-6">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">結帳操作</h2>
+              <Separator className="mb-4" />
+              <div className="text-center py-6">
+                <div className="text-base text-gray-500 mb-2">合計金額</div>
+                <div className="text-4xl font-bold text-brand-orange">
+                  NT$ {orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)}
+                </div>
+                <div className="text-base text-gray-500 mt-2">
+                  共 {orderItems.reduce((sum, item) => sum + item.quantity, 0)} 項商品
+                </div>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={handleOpenCheckout}
+                className="w-full bg-gray-900 text-white p-5 rounded-xl text-center hover:bg-gray-800 active:scale-[0.98] transition-all"
+              >
+                <div className="text-lg font-bold">結帳</div>
+              </button>
+              <Button
+                variant="outline"
+                onClick={clearAllItems}
+                className="w-full h-14 text-base border-2 hover:bg-gray-50 active:scale-[0.98]"
+              >
+                <Trash2 className="h-5 w-5 mr-2" />
+                清空購物車
+              </Button>
+            </div>
+          </Card>
         </div>
       </div>
 
@@ -379,6 +499,12 @@ export default function App() {
         initialData={inventoryData}
       />
 
+      <TodayOrdersDialog
+        open={todayOrdersOpen}
+        onOpenChange={setTodayOrdersOpen}
+        orders={completedOrders}
+      />
+
       <DailySettlementDialog
         open={settlementOpen}
         onOpenChange={setSettlementOpen}
@@ -388,6 +514,8 @@ export default function App() {
         inventoryData={inventoryData}
         onBackToInventory={handleBackToInventory}
         onConfirmSubmit={handleFinalSubmit}
+        currentShift={currentShift}
+        products={products}
       />
       <ProductCustomizeDialog
         open={customizeOpen}

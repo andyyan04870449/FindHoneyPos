@@ -14,17 +14,26 @@ using Microsoft.AspNetCore.Mvc;
 public class PosOrdersController : ControllerBase
 {
     private readonly IOrderService _orderService;
+    private readonly IShiftService _shiftService;
 
-    public PosOrdersController(IOrderService orderService)
+    public PosOrdersController(IOrderService orderService, IShiftService shiftService)
     {
         _orderService = orderService;
+        _shiftService = shiftService;
     }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateOrderRequest request)
     {
+        var shift = await _shiftService.GetCurrentOpenAsync(request.DeviceId);
+        if (shift == null)
+            return BadRequest(ApiResponse<object>.Fail("尚未開班，請先開班再建立訂單"));
+
         var order = MapFromRequest(request);
+        order.ShiftId = shift.Id;
         var created = await _orderService.CreateAsync(order);
+        await _shiftService.UpdateStatsAsync(shift.Id, created);
+
         return CreatedAtAction(nameof(Create), ApiResponse<object>.Ok(new
         {
             orderId = created.Id.ToString(),
@@ -36,8 +45,23 @@ public class PosOrdersController : ControllerBase
     [HttpPost("batch")]
     public async Task<IActionResult> BatchCreate([FromBody] BatchOrdersRequest request)
     {
-        var orders = request.Orders.Select(MapFromRequest);
+        // 取第一筆的 DeviceId 查班次
+        var deviceId = request.Orders.FirstOrDefault()?.DeviceId;
+        var shift = await _shiftService.GetCurrentOpenAsync(deviceId);
+        if (shift == null)
+            return BadRequest(ApiResponse<object>.Fail("尚未開班，請先開班再建立訂單"));
+
+        var orders = request.Orders.Select(r =>
+        {
+            var order = MapFromRequest(r);
+            order.ShiftId = shift.Id;
+            return order;
+        });
         var created = await _orderService.BatchCreateAsync(orders);
+
+        foreach (var order in created)
+            await _shiftService.UpdateStatsAsync(shift.Id, order);
+
         return Ok(ApiResponse<object>.Ok(new { synced = created.Count() }));
     }
 

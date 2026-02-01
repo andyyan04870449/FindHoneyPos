@@ -93,6 +93,13 @@ public class ReportsController : ControllerBase
         return Ok(ApiResponse<object>.Ok(await _reportService.GetCustomerTagDistributionAsync(d)));
     }
 
+    [HttpGet("inventory-summary")]
+    public async Task<IActionResult> GetInventorySummary([FromQuery] string? date = null)
+    {
+        var d = ParseDate(date);
+        return Ok(ApiResponse<object>.Ok(await _reportService.GetInventorySummaryAsync(d)));
+    }
+
     [HttpGet("export")]
     public async Task<IActionResult> Export([FromQuery] string? date = null, [FromQuery] string format = "csv")
     {

@@ -46,7 +46,7 @@ const navigation = [
   { name: '加料管理', href: '/addons', icon: Cherry },
   { name: '訂單管理', href: '/orders', icon: ShoppingCart },
   { name: '折扣管理', href: '/discounts', icon: Tag },
-  { name: '日結報表', href: '/reports', icon: BarChart3 },
+  { name: '日結紀錄', href: '/reports', icon: BarChart3 },
   { name: 'LINE OA整合', href: '/line-oa', icon: MessageSquare },
   { name: '激勵管理', href: '/incentive', icon: TrendingUp },
   { name: '帳號管理', href: '/accounts', icon: Users },

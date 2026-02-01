@@ -22,5 +22,12 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.HasIndex(o => o.OrderNumber);
         builder.HasIndex(o => o.Timestamp);
         builder.HasIndex(o => new { o.DeviceId, o.Timestamp });
+
+        // Shift FK
+        builder.HasOne(o => o.Shift)
+            .WithMany(s => s.Orders)
+            .HasForeignKey(o => o.ShiftId)
+            .OnDelete(DeleteBehavior.SetNull);
+        builder.HasIndex(o => o.ShiftId);
     }
 }

@@ -12,6 +12,7 @@ interface UseOrdersOptions {
   isOnline: boolean;
   deviceId: string;
   setUnsyncedCount: React.Dispatch<React.SetStateAction<number>>;
+  onOrderCreated?: () => void;
 }
 
 function buildCreateOrderRequest(
@@ -73,6 +74,7 @@ export function useOrders({
   isOnline,
   deviceId,
   setUnsyncedCount,
+  onOrderCreated,
 }: UseOrdersOptions) {
   const [completedOrders, setCompletedOrders] = useState<CompletedOrder[]>([]);
   const [orderCount, setOrderCount] = useState(INITIAL_ORDER_COUNT);
@@ -117,6 +119,7 @@ export function useOrders({
           toast.dismiss();
           toast.success(`結帳成功！實付金額 NT$ ${discountInfo.finalTotal}`);
           logger.systemEvent('訂單完成（線上）', { orderId: res.orderId });
+          onOrderCreated?.();
         } catch (err) {
           // 線上失敗 → 放入佇列
           toast.dismiss();
@@ -151,7 +154,7 @@ export function useOrders({
         logger.systemEvent('訂單離線暫存', { localId: pending.localId });
       }
     },
-    [orderItems, isOnline, deviceId, setOrderItems, setUnsyncedCount]
+    [orderItems, isOnline, deviceId, setOrderItems, setUnsyncedCount, onOrderCreated]
   );
 
   return {

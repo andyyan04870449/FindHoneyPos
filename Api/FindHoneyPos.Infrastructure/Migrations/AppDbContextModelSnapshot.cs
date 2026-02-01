@@ -192,8 +192,7 @@ namespace FindHoneyPos.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Date")
-                        .IsUnique();
+                    b.HasIndex("Date");
 
                     b.ToTable("DailySettlements", (string)null);
                 });
@@ -395,6 +394,9 @@ namespace FindHoneyPos.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<int?>("ShiftId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -414,6 +416,8 @@ namespace FindHoneyPos.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OrderNumber");
+
+                    b.HasIndex("ShiftId");
 
                     b.HasIndex("Timestamp");
 
@@ -540,6 +544,61 @@ namespace FindHoneyPos.Infrastructure.Migrations
                     b.ToTable("Products", (string)null);
                 });
 
+            modelBuilder.Entity("FindHoneyPos.Core.Entities.Shift", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeviceId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("NetRevenue")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateTime>("OpenedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("SettlementId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("TotalDiscount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int>("TotalOrders")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalRevenue")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OpenedAt");
+
+                    b.HasIndex("SettlementId")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("DeviceId", "Status");
+
+                    b.ToTable("Shifts", (string)null);
+                });
+
             modelBuilder.Entity("FindHoneyPos.Core.Entities.AuditLog", b =>
                 {
                     b.HasOne("FindHoneyPos.Core.Entities.AdminUser", "User")
@@ -579,6 +638,16 @@ namespace FindHoneyPos.Infrastructure.Migrations
                     b.Navigation("Settlement");
                 });
 
+            modelBuilder.Entity("FindHoneyPos.Core.Entities.Order", b =>
+                {
+                    b.HasOne("FindHoneyPos.Core.Entities.Shift", "Shift")
+                        .WithMany("Orders")
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Shift");
+                });
+
             modelBuilder.Entity("FindHoneyPos.Core.Entities.OrderItem", b =>
                 {
                     b.HasOne("FindHoneyPos.Core.Entities.Order", "Order")
@@ -615,6 +684,16 @@ namespace FindHoneyPos.Infrastructure.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("FindHoneyPos.Core.Entities.Shift", b =>
+                {
+                    b.HasOne("FindHoneyPos.Core.Entities.DailySettlement", "Settlement")
+                        .WithOne("Shift")
+                        .HasForeignKey("FindHoneyPos.Core.Entities.Shift", "SettlementId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Settlement");
+                });
+
             modelBuilder.Entity("FindHoneyPos.Core.Entities.AdminUser", b =>
                 {
                     b.Navigation("AuditLogs");
@@ -623,6 +702,8 @@ namespace FindHoneyPos.Infrastructure.Migrations
             modelBuilder.Entity("FindHoneyPos.Core.Entities.DailySettlement", b =>
                 {
                     b.Navigation("InventoryCounts");
+
+                    b.Navigation("Shift");
                 });
 
             modelBuilder.Entity("FindHoneyPos.Core.Entities.MessageTemplate", b =>
@@ -645,6 +726,11 @@ namespace FindHoneyPos.Infrastructure.Migrations
                     b.Navigation("InventoryCounts");
 
                     b.Navigation("OrderItems");
+                });
+
+            modelBuilder.Entity("FindHoneyPos.Core.Entities.Shift", b =>
+                {
+                    b.Navigation("Orders");
                 });
 #pragma warning restore 612, 618
         }

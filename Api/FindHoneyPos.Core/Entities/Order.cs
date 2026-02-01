@@ -18,5 +18,9 @@ public class Order
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     public string? CustomerTag { get; set; }
 
+    // 班次關聯（nullable，向下相容舊訂單）
+    public int? ShiftId { get; set; }
+    public Shift? Shift { get; set; }
+
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
 }

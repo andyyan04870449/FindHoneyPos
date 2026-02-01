@@ -12,4 +12,5 @@ public interface IReportService
     Task<object> GetAddonProductCombinationsAsync(DateOnly date);
     Task<object> GetAddonRevenueTrendAsync(int days);
     Task<object> GetCustomerTagDistributionAsync(DateOnly date);
+    Task<object> GetInventorySummaryAsync(DateOnly date);
 }
