@@ -31,6 +31,10 @@ jobs:
             Frontend/package-lock.json
             Backend/package-lock.json
 
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
       # Build verification (fast-fail before Docker)
       - name: Build Frontend
         working-directory: Frontend
@@ -50,6 +54,12 @@ jobs:
           npm ci
           npm run build
 
+      - name: Build API
+        working-directory: Api
+        run: |
+          dotnet restore
+          dotnet build -c Release /p:Version=${{ env.APP_VERSION }}
+
       # Ensure PostgreSQL is running
       - name: Ensure PostgreSQL
         run: |
@@ -63,22 +73,11 @@ jobs:
           echo "PostgreSQL failed to start"
           exit 1
 
-      # Build and start .NET API server
-      - name: Ensure API server
+      # Stop old launchd API server (now managed by Docker)
+      - name: Stop legacy API server
         run: |
-          # Rebuild to pick up any code changes
-          dotnet build Api/FindHoneyPos.Api/FindHoneyPos.Api.csproj -c Release --nologo -v q
-          # Restart via launchd
           launchctl unload ~/Library/LaunchAgents/com.findhoneypos.api.plist 2>/dev/null || true
           sleep 2
-          launchctl load ~/Library/LaunchAgents/com.findhoneypos.api.plist
-          # Wait for API to be ready
-          for i in 1 2 3 4 5 6; do
-            curl -sf http://localhost:5001/api/auth/status > /dev/null && echo "API server ready" && exit 0
-            sleep 5
-          done
-          echo "API server failed to start"
-          exit 1
 
       # Docker build and deploy
       - name: Unlock macOS Keychain
@@ -95,7 +94,7 @@ jobs:
         run: docker compose down --timeout 30
 
       - name: Start containers
-        run: docker compose up -d --wait --wait-timeout 60
+        run: docker compose up -d --wait --wait-timeout 120
 
       # Health checks with retry
       - name: Verify Frontend
@@ -114,6 +113,15 @@ jobs:
             sleep 3
           done
           echo "Backend health check failed"
+          exit 1
+
+      - name: Verify API
+        run: |
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            curl -f http://localhost:5001/api/health && exit 0
+            sleep 3
+          done
+          echo "API health check failed"
           exit 1
 
       # Restart ngrok tunnels (managed by launchd so it survives job cleanup)
