@@ -153,3 +153,28 @@ export interface IncentiveHistory {
   achieved: boolean;
   submittedAt: string;
 }
+
+export interface SettlementRecord {
+  id: number;
+  date: string;
+  totalOrders: number;
+  totalRevenue: number;
+  totalDiscount: number;
+  netRevenue: number;
+  deviceId: string | null;
+  submittedAt: string;
+  incentiveTarget: number;
+  incentiveItemsSold: number;
+  incentiveAchieved: boolean;
+}
+
+export interface InventoryCountItem {
+  productId: number;
+  productName: string;
+  quantity: number;
+  soldQuantity: number;
+}
+
+export interface SettlementDetail extends SettlementRecord {
+  inventoryCounts: InventoryCountItem[];
+}

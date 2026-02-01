@@ -14,7 +14,7 @@ public class DailySettlementConfiguration : IEntityTypeConfiguration<DailySettle
         builder.Property(ds => ds.TotalDiscount).HasPrecision(12, 2);
         builder.Property(ds => ds.NetRevenue).HasPrecision(12, 2);
         builder.Property(ds => ds.DeviceId).HasMaxLength(50);
-        builder.HasIndex(ds => ds.Date).IsUnique();
+        builder.HasIndex(ds => ds.Date);
 
         // 激勵欄位
         builder.Property(ds => ds.IncentiveTarget).HasDefaultValue(0);

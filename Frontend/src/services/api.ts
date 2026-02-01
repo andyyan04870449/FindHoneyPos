@@ -21,6 +21,10 @@ import type {
   SystemStatus,
   PendingOrder,
   IncentiveSettingsResponse,
+  ShiftResponse,
+  ShiftStatusResponse,
+  CloseShiftRequest,
+  CloseShiftResponse,
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL as string | undefined;
@@ -204,5 +208,28 @@ export const posApi = {
   /** 取得激勵設定 */
   getIncentiveSettings(): Promise<IncentiveSettingsResponse> {
     return fetchApi<IncentiveSettingsResponse>('/api/pos/incentive/settings');
+  },
+
+  /** 開班 */
+  openShift(deviceId: string): Promise<ShiftResponse> {
+    return fetchApi<ShiftResponse>('/api/pos/shift/open', {
+      method: 'POST',
+      body: JSON.stringify({ deviceId }),
+    });
+  },
+
+  /** 取得當前班次 */
+  getCurrentShift(deviceId: string): Promise<ShiftStatusResponse> {
+    return fetchApi<ShiftStatusResponse>(
+      `/api/pos/shift/current?deviceId=${encodeURIComponent(deviceId)}`
+    );
+  },
+
+  /** 關班結帳 */
+  closeShift(shiftId: number, req: CloseShiftRequest): Promise<CloseShiftResponse> {
+    return fetchApi<CloseShiftResponse>(`/api/pos/shift/${shiftId}/close`, {
+      method: 'POST',
+      body: JSON.stringify(req),
+    });
   },
 };

@@ -20,9 +20,17 @@ public class DailySettlementService : IDailySettlementService
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         settlement.Date = today;
 
-        // Calculate from today's orders
-        var start = today.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
-        var end = start.AddDays(1);
+        // 從上一次結帳之後開始算（換班邏輯）
+        var dayStart = today.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var end = dayStart.AddDays(1);
+
+        var lastSettlement = await _context.DailySettlements
+            .Where(ds => ds.Date == today)
+            .OrderByDescending(ds => ds.SubmittedAt)
+            .FirstOrDefaultAsync();
+
+        var start = lastSettlement?.SubmittedAt ?? dayStart;
+
         var orders = await _context.Orders
             .Where(o => o.Timestamp >= start && o.Timestamp < end && o.Status == OrderStatus.Completed)
             .ToListAsync();
@@ -43,6 +51,24 @@ public class DailySettlementService : IDailySettlementService
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         return await _context.DailySettlements
             .Include(ds => ds.InventoryCounts)
-            .FirstOrDefaultAsync(ds => ds.Date == today);
+            .Where(ds => ds.Date == today)
+            .OrderByDescending(ds => ds.SubmittedAt)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<(IEnumerable<DailySettlement> Items, int Total)> GetAllAsync(int page, int pageSize)
+    {
+        var query = _context.DailySettlements.OrderByDescending(ds => ds.SubmittedAt);
+        var total = await query.CountAsync();
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return (items, total);
+    }
+
+    public async Task<DailySettlement?> GetByIdAsync(int id)
+    {
+        return await _context.DailySettlements
+            .Include(ds => ds.InventoryCounts)
+                .ThenInclude(ic => ic.Product)
+            .FirstOrDefaultAsync(ds => ds.Id == id);
     }
 }

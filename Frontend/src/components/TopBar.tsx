@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Wifi, WifiOff, Menu, X, Settings, RefreshCw, Database, Calculator, LogOut } from "lucide-react";
 import { SettingsDialog } from "./SettingsDialog";
 import logoImage from '@/assets/0823fe84278739e4331a8463c99173e87d691257.png';
+import type { ShiftResponse } from "../types";
 
 interface TopBarProps {
   isOnline: boolean;
@@ -14,8 +15,10 @@ interface TopBarProps {
   onUpdateMenu: () => void;
   onSyncData: () => void;
   onOpenSettlement: () => void;
+  onOpenTodayOrders: () => void;
   userName?: string;
   onLogout?: () => void;
+  currentShift?: ShiftResponse | null;
 }
 
 export function TopBar({
@@ -27,8 +30,10 @@ export function TopBar({
   onUpdateMenu,
   onSyncData,
   onOpenSettlement,
+  onOpenTodayOrders,
   userName,
   onLogout,
+  currentShift,
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -90,12 +95,25 @@ export function TopBar({
             </div>
 
             {/* 今日訂單 */}
-            <div className="text-right">
+            <div
+              className="text-right cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={onOpenTodayOrders}
+            >
               <p className="text-sm text-gray-500 mb-1">今日訂單</p>
               <Badge className="bg-brand-orange text-white text-base px-3 py-1">
-                {orderCount} 筆
+                {currentShift ? currentShift.totalOrders : orderCount} 筆
               </Badge>
             </div>
+
+            {/* 班次營業額 */}
+            {currentShift && (
+              <div className="text-right">
+                <p className="text-sm text-gray-500 mb-1">班次營業額</p>
+                <Badge variant="outline" className="text-base px-3 py-1 border-2 font-bold text-brand-orange border-brand-orange">
+                  NT$ {currentShift.totalRevenue.toLocaleString()}
+                </Badge>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -132,7 +150,13 @@ export function TopBar({
               {menuVersion}
             </Badge>
           </div>
-          <div>
+          <div
+            className="cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => {
+              onOpenTodayOrders();
+              setMenuOpen(false);
+            }}
+          >
             <p className="text-xs text-gray-500">今日訂單</p>
             <Badge className="bg-brand-orange text-white text-sm px-2 py-0.5">
               {orderCount} 筆

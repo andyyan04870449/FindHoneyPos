@@ -7,7 +7,7 @@ import { Dashboard } from '@/app/pages/Dashboard';
 import { ProductManagement } from '@/app/pages/ProductManagement';
 import { OrderManagement } from '@/app/pages/OrderManagement';
 import { DiscountManagement } from '@/app/pages/DiscountManagement';
-import { DailyReport } from '@/app/pages/DailyReport';
+import { SettlementList } from '@/app/pages/SettlementList';
 import { LineOASettings } from '@/app/pages/LineOASettings';
 import { AddonManagement } from '@/app/pages/AddonManagement';
 import { LoginPage } from '@/app/pages/LoginPage';
@@ -32,7 +32,7 @@ export default function App() {
               <Route path="addons" element={<AddonManagement />} />
               <Route path="orders" element={<OrderManagement />} />
               <Route path="discounts" element={<DiscountManagement />} />
-              <Route path="reports" element={<DailyReport />} />
+              <Route path="reports" element={<SettlementList />} />
               <Route path="line-oa" element={<LineOASettings />} />
               <Route path="incentive" element={<IncentiveManagement />} />
               <Route path="accounts" element={<AccountManagement />} />

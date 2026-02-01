@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { Calculator, Printer, TrendingUp, Trophy, ArrowLeft, Check } from "lucide-react";
-import type { CompletedOrder, InventoryData } from "../types";
+import { Calculator, Printer, TrendingUp, Trophy, ArrowLeft, Check, Package } from "lucide-react";
+import type { CompletedOrder, InventoryData, Product, ShiftResponse } from "../types";
 
 interface DailySettlementDialogProps {
   open: boolean;
@@ -12,6 +12,8 @@ interface DailySettlementDialogProps {
   inventoryData?: Record<string, number>;
   onBackToInventory?: () => void;
   onConfirmSubmit?: (inventoryData: Record<string, number>) => void;
+  currentShift?: ShiftResponse | null;
+  products?: Product[];
 }
 
 export function DailySettlementDialog({
@@ -23,6 +25,8 @@ export function DailySettlementDialog({
   inventoryData,
   onBackToInventory,
   onConfirmSubmit,
+  currentShift,
+  products,
 }: DailySettlementDialogProps) {
   // 計算今日資料
   const today = new Date();
@@ -34,13 +38,14 @@ export function DailySettlementDialog({
     return orderDate.getTime() === today.getTime();
   });
 
-  const totalRevenue = todayOrders.reduce((sum, order) => sum + order.total, 0);
-  const totalDiscount = todayOrders.reduce((sum, order) => {
+  // 若有班次，使用後端即時統計；否則走前端計算
+  const totalRevenue = currentShift ? currentShift.totalRevenue : todayOrders.reduce((sum, order) => sum + order.total, 0);
+  const totalDiscount = currentShift ? currentShift.totalDiscount : todayOrders.reduce((sum, order) => {
     return sum + (order.subtotal - order.total);
   }, 0);
-  const totalOrders = todayOrders.length;
+  const totalOrders = currentShift ? currentShift.totalOrders : todayOrders.length;
 
-  // 計算已售出的商品數量（只計算實際收錢的訂單）
+  // 計算已售出的商品數量（只計算實際收錢的訂單）— 激勵以天為單位，仍用前端計算
   const totalItemsSold = todayOrders
     .filter(order => order.total > 0)
     .reduce((total, order) => {
@@ -178,7 +183,7 @@ export function DailySettlementDialog({
             <div className="bg-gray-200 px-6 py-4">
               <h3 className="text-xl font-bold text-gray-900">明細</h3>
             </div>
-            
+
             <div className="bg-white">
               <div className="bg-gray-100 px-4 py-3 font-semibold text-sm text-gray-700 grid grid-cols-12 gap-4 border-b-2 border-gray-300">
                 <div className="col-span-2">訂單編號</div>
@@ -188,7 +193,7 @@ export function DailySettlementDialog({
                 <div className="col-span-1 text-right">折扣</div>
                 <div className="col-span-2 text-right">實收</div>
               </div>
-              
+
               <div className="divide-y divide-gray-200 max-h-80 overflow-y-auto">
                 {todayOrders.length === 0 ? (
                   <div className="p-8 text-center text-gray-500">
@@ -235,6 +240,39 @@ export function DailySettlementDialog({
               </div>
             </div>
           </div>
+
+          {/* 閉店盤點 */}
+          {inventoryData && Object.keys(inventoryData).length > 0 && (
+            <div className="bg-gray-50 border-2 border-gray-300 rounded-xl overflow-hidden mt-4">
+              <div className="bg-gray-200 px-6 py-4">
+                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Package className="h-5 w-5 text-teal-600" />
+                  閉店盤點
+                </h3>
+              </div>
+              <div className="bg-white">
+                <div className="bg-gray-100 px-4 py-3 font-semibold text-sm text-gray-700 grid grid-cols-2 gap-4 border-b-2 border-gray-300">
+                  <div>品項名稱</div>
+                  <div className="text-right">剩餘數量</div>
+                </div>
+                <div className="divide-y divide-gray-200">
+                  {Object.entries(inventoryData).map(([productId, quantity]) => {
+                    const product = products?.find(p => p.id === productId);
+                    return (
+                      <div key={productId} className="px-4 py-3 grid grid-cols-2 gap-4 items-center text-sm">
+                        <div className="font-medium text-gray-700">
+                          {product?.name ?? `商品 #${productId}`}
+                        </div>
+                        <div className="text-right font-bold text-teal-600">
+                          {quantity}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 底部按鈕 */}
