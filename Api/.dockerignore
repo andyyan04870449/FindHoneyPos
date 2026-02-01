@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+**/logs/
+**/TestResults/
+**/.vs/
+**/.vscode/
+**/*.user
+**/*.DotSettings
+**/node_modules/
+.git/
+.gitignore
+README.md

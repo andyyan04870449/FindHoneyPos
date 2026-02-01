@@ -94,15 +94,16 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 // CORS
+var corsOrigins = builder.Configuration.GetValue<string>("Cors:AllowedOrigins");
+var origins = !string.IsNullOrWhiteSpace(corsOrigins)
+    ? corsOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    : new[] { "http://localhost:3000", "http://localhost:5173", "http://localhost:5175" };
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins(
-            "http://localhost:3000",
-            "http://localhost:5173",
-            "http://localhost:5175"
-        )
+        policy.WithOrigins(origins)
         .AllowAnyHeader()
         .AllowAnyMethod();
     });
@@ -146,7 +147,4 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-app.Urls.Add("http://localhost:5001");
-
-Log.Information("FindHoneyPos API started on http://localhost:5001");
 app.Run();
