@@ -64,11 +64,11 @@ export function ProductCustomizeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-5xl w-[92vw] h-[75vh] !max-h-[85vh] overflow-hidden p-0 flex flex-col">
-        {/* 左右兩欄 */}
-        <div className="flex min-h-0 flex-1">
+      <DialogContent className="!max-w-5xl w-[92vw] h-[85vh] lg:h-[75vh] !max-h-[90vh] lg:!max-h-[85vh] overflow-hidden p-0 flex flex-col">
+        {/* 小螢幕上下、大螢幕左右兩欄 */}
+        <div className="flex flex-col lg:flex-row min-h-0 flex-1 overflow-y-auto lg:overflow-hidden">
           {/* 左側：加料項目區 */}
-          <div className="flex-[3] border-r border-gray-200 overflow-y-auto p-6">
+          <div className="lg:flex-[3] border-b lg:border-b-0 lg:border-r border-gray-200 overflow-visible lg:overflow-y-auto p-4 lg:p-6">
             <h3 className="text-2xl font-bold mb-1">{product.name}</h3>
             <p className="text-lg text-gray-500 mb-5">NT$ {product.price}</p>
 
@@ -101,9 +101,9 @@ export function ProductCustomizeDialog({
           </div>
 
           {/* 右側：詳情 + 確認 */}
-          <div className="flex-[2] flex flex-col min-h-0">
+          <div className="lg:flex-[2] flex flex-col min-h-0">
             {/* 上半：數量、小計 */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+            <div className="flex-1 overflow-visible lg:overflow-y-auto p-4 lg:p-6 space-y-5">
               {/* 數量控制 */}
               <div>
                 <h4 className="text-lg font-semibold mb-1 text-gray-700">客製化數量</h4>
@@ -158,7 +158,7 @@ export function ProductCustomizeDialog({
             </div>
 
             {/* 下半：確認按鈕 */}
-            <div className="shrink-0 p-6 border-t border-gray-200">
+            <div className="shrink-0 p-4 lg:p-6 border-t border-gray-200">
               <Button
                 onClick={handleConfirm}
                 className="w-full h-14 text-lg bg-brand-orange hover:bg-brand-orange/90 text-white"

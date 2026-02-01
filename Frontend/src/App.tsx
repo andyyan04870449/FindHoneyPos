@@ -121,6 +121,7 @@ export default function App() {
     try {
       const shift = await posApi.openShift(deviceId);
       setCurrentShift(shift);
+      await refetchProducts();
       toast.success('班次已開啟');
       logger.userAction('開班', { shiftId: shift.id });
     } catch (err) {
@@ -129,7 +130,7 @@ export default function App() {
     } finally {
       setShiftLoading(false);
     }
-  }, [deviceId]);
+  }, [deviceId, refetchProducts]);
 
   // 網路恢復時自動同步離線訂單
   useEffect(() => {

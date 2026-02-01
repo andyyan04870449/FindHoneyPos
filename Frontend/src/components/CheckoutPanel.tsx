@@ -109,12 +109,12 @@ export function CheckoutPanel({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-[98vw] w-[98vw] h-[96vh] !max-h-[96vh] overflow-hidden p-8">
+      <DialogContent className="!max-w-[98vw] w-[98vw] h-[96vh] !max-h-[96vh] overflow-hidden p-4 lg:p-8">
         <DialogHeader>
-          <DialogTitle className="text-4xl font-bold">結帳</DialogTitle>
+          <DialogTitle className="text-2xl lg:text-4xl font-bold">結帳</DialogTitle>
         </DialogHeader>
 
-        <div className="flex gap-8 h-[calc(96vh-140px)] overflow-hidden pb-4">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 h-[calc(96vh-140px)] overflow-y-auto lg:overflow-hidden pb-4">
           {/* 左側：訂單明細 */}
           <div className="flex-1 flex flex-col min-w-0">
             <h3 className="text-2xl font-semibold mb-4">訂單明細</h3>
