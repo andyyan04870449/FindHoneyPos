@@ -79,6 +79,10 @@ jobs:
           launchctl unload ~/Library/LaunchAgents/com.findhoneypos.api.plist 2>/dev/null || true
           sleep 2
 
+      # Load environment variables for API container
+      - name: Load .env
+        run: cp ~/.env.findhoneypos .env
+
       # Docker build and deploy
       - name: Unlock macOS Keychain
         run: security unlock-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" ~/Library/Keychains/login.keychain-db
