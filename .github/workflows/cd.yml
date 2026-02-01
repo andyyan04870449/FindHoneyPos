@@ -10,6 +10,18 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version info
+        id: version
+        run: |
+          GIT_COMMIT=$(git rev-parse --short HEAD)
+          # Use the latest tag reachable from HEAD; fall back to 'dev' if none
+          APP_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "dev")
+          echo "APP_VERSION=${APP_VERSION}" >> "$GITHUB_ENV"
+          echo "GIT_COMMIT=${GIT_COMMIT}" >> "$GITHUB_ENV"
+          echo "Version: ${APP_VERSION}+${GIT_COMMIT}"
 
       - uses: actions/setup-node@v4
         with:
@@ -22,12 +34,18 @@ jobs:
       # Build verification (fast-fail before Docker)
       - name: Build Frontend
         working-directory: Frontend
+        env:
+          APP_VERSION: ${{ env.APP_VERSION }}
+          GIT_COMMIT: ${{ env.GIT_COMMIT }}
         run: |
           npm ci
           npm run build
 
       - name: Build Backend
         working-directory: Backend
+        env:
+          APP_VERSION: ${{ env.APP_VERSION }}
+          GIT_COMMIT: ${{ env.GIT_COMMIT }}
         run: |
           npm ci
           npm run build
@@ -35,6 +53,9 @@ jobs:
       # Docker build and deploy
       - name: Build Docker images
         timeout-minutes: 10
+        env:
+          APP_VERSION: ${{ env.APP_VERSION }}
+          GIT_COMMIT: ${{ env.GIT_COMMIT }}
         run: docker compose build
 
       - name: Stop existing containers

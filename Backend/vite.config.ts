@@ -10,6 +10,10 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.APP_VERSION || 'dev'),
+    __GIT_COMMIT__: JSON.stringify(process.env.GIT_COMMIT || 'unknown'),
+  },
   resolve: {
     alias: {
       // Alias @ to the src directory

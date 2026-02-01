@@ -1,5 +1,11 @@
 # ---- Stage 1: Build ----
 FROM node:22-alpine AS builder
+
+ARG APP_VERSION=dev
+ARG GIT_COMMIT=unknown
+ENV APP_VERSION=${APP_VERSION}
+ENV GIT_COMMIT=${GIT_COMMIT}
+
 WORKDIR /app
 
 COPY package.json package-lock.json ./

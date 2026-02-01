@@ -35,7 +35,7 @@ import {
 import { Label } from '@/app/components/ui/label';
 import { Input } from '@/app/components/ui/input';
 import { cn } from '@/app/components/ui/utils';
-import { APP_VERSION } from '@/constants';
+import { BUILD_INFO } from '@/constants';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
@@ -162,7 +162,7 @@ export function DashboardLayout() {
           {/* Footer info */}
           <div className="border-t p-4">
             <div className="text-xs text-gray-500">
-              <p>版本：{APP_VERSION}</p>
+              <p>版本：{BUILD_INFO}</p>
               <p className="mt-1">&copy; 2026 尋蜜點餐系統</p>
             </div>
           </div>

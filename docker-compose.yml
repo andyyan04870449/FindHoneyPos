@@ -2,6 +2,9 @@ services:
   frontend:
     build:
       context: ./Frontend
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
     ports:
       - "3000:80"
     restart: unless-stopped
@@ -15,6 +18,9 @@ services:
   backend:
     build:
       context: ./Backend
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
     ports:
       - "3001:80"
     restart: unless-stopped

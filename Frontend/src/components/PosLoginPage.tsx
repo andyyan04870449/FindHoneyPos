@@ -5,6 +5,7 @@ import { Label } from './ui/label';
 import { Card } from './ui/card';
 import { toast } from 'sonner';
 import logoImage from '@/assets/0823fe84278739e4331a8463c99173e87d691257.png';
+import { BUILD_INFO } from '@/constants';
 
 interface PosLoginPageProps {
   isInitialized: boolean;
@@ -137,6 +138,7 @@ export function PosLoginPage({ isInitialized, onLogin, onRegister }: PosLoginPag
             {loading ? '處理中...' : (isRegisterMode ? '建立帳號並開始使用' : '登入')}
           </Button>
         </form>
+        <p className="text-center text-xs text-gray-400 mt-4">{BUILD_INFO}</p>
       </Card>
     </div>
   );
