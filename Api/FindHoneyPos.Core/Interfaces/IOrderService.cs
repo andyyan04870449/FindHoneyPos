@@ -9,6 +9,7 @@ public interface IOrderService
     Task<Order?> GetByIdAsync(int id);
     Task<Order> CreateAsync(Order order);
     Task<IEnumerable<Order>> BatchCreateAsync(IEnumerable<Order> orders);
+    Task<IEnumerable<Order>> GetByShiftIdAsync(int shiftId);
     Task<object> GetStatsAsync();
     Task<int> GetNextDailySequenceAsync();
 }

@@ -100,7 +100,7 @@ export function SettlementList() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">日結紀錄</h2>
-        <p className="text-gray-600 mt-1">查看每日結帳紀錄與庫存盤點</p>
+        <p className="text-gray-600 mt-1">查看關班紀錄與報廢登記</p>
       </div>
 
       {loading ? (
@@ -234,14 +234,14 @@ export function SettlementList() {
               {/* Inventory Counts */}
               {detail.inventoryCounts.length > 0 && (
                 <div>
-                  <h4 className="font-semibold mb-3">庫存盤點</h4>
+                  <h4 className="font-semibold mb-3">報廢登記</h4>
                   <div className="bg-white rounded-lg border">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>商品名稱</TableHead>
                           <TableHead className="text-right">售出數量</TableHead>
-                          <TableHead className="text-right">盤點剩餘</TableHead>
+                          <TableHead className="text-right">報廢數量</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>

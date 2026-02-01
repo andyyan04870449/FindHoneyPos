@@ -39,7 +39,8 @@ export function useCart() {
   const addToOrderWithAddons = useCallback(
     (product: Product, addons: SelectedAddon[], quantity: number) => {
       const cartItemId = generateCartItemId(product.id, addons);
-      const unitPrice = calculateUnitPrice(product.price, addons);
+      const basePrice = (product.isOnPromotion && product.promotionPrice != null) ? product.promotionPrice : product.price;
+      const unitPrice = calculateUnitPrice(basePrice, addons);
 
       setOrderItems(prev => {
         const existing = prev.find(item => item.cartItemId === cartItemId);

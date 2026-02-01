@@ -87,7 +87,8 @@ export function ProductGrid({
               name={product.name}
               price={product.price}
               quantity={getProductQuantity(product.id)}
-              isPopular={product.isPopular}
+              isOnPromotion={product.isOnPromotion}
+              promotionPrice={product.promotionPrice}
               onClick={() => onProductClick(product)}
             />
           ))}

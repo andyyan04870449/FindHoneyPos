@@ -47,7 +47,8 @@ public class ProductService : IProductService
         existing.Name = product.Name;
         existing.Price = product.Price;
         existing.Status = product.Status;
-        existing.IsPopular = product.IsPopular;
+        existing.IsOnPromotion = product.IsOnPromotion;
+        existing.PromotionPrice = product.PromotionPrice;
         existing.Category = product.Category;
         existing.SortOrder = product.SortOrder;
         existing.UpdatedAt = DateTime.UtcNow;

@@ -8,7 +8,8 @@ public class Product
     public string Name { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public ProductStatus Status { get; set; } = ProductStatus.Active;
-    public bool IsPopular { get; set; }
+    public bool IsOnPromotion { get; set; }
+    public decimal? PromotionPrice { get; set; }
     public string? Category { get; set; }
     public int SortOrder { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

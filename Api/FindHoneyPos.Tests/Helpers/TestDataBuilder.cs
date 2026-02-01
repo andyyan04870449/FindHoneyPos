@@ -11,7 +11,8 @@ public static class TestDataBuilder
         ProductStatus status = ProductStatus.Active,
         string? category = "飲料",
         int sortOrder = 0,
-        bool isPopular = false)
+        bool isOnPromotion = false,
+        decimal? promotionPrice = null)
     {
         return new Product
         {
@@ -20,7 +21,8 @@ public static class TestDataBuilder
             Status = status,
             Category = category,
             SortOrder = sortOrder,
-            IsPopular = isPopular,
+            IsOnPromotion = isOnPromotion,
+            PromotionPrice = promotionPrice,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
         };

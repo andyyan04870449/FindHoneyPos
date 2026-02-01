@@ -4,7 +4,7 @@ import type { Product } from '../types';
 import { posApi } from '../services/api';
 import { logger } from '../utils/logger';
 
-export function useProducts(isOnline: boolean) {
+export function useProducts(isOnline: boolean, isAuthenticated: boolean = true) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -23,10 +23,10 @@ export function useProducts(isOnline: boolean) {
   }, []);
 
   useEffect(() => {
-    if (isOnline) {
+    if (isOnline && isAuthenticated) {
       fetchProducts();
     }
-  }, [isOnline, fetchProducts]);
+  }, [isOnline, isAuthenticated, fetchProducts]);
 
   return { products, loading, refetchProducts: fetchProducts };
 }

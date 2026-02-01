@@ -42,6 +42,15 @@ public class OrderService : IOrderService
     public async Task<Order?> GetByIdAsync(int id)
         => await _context.Orders.Include(o => o.Items).ThenInclude(i => i.Addons).FirstOrDefaultAsync(o => o.Id == id);
 
+    public async Task<IEnumerable<Order>> GetByShiftIdAsync(int shiftId)
+    {
+        return await _context.Orders
+            .Include(o => o.Items).ThenInclude(i => i.Addons)
+            .Where(o => o.ShiftId == shiftId)
+            .OrderByDescending(o => o.Timestamp)
+            .ToListAsync();
+    }
+
     public async Task<int> GetNextDailySequenceAsync()
     {
         var today = DateTime.UtcNow.Date;
