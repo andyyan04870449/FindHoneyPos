@@ -25,7 +25,7 @@ export function CheckoutPanel({
   discounts,
   onConfirmCheckout
 }: CheckoutPanelProps) {
-  const [discountType, setDiscountType] = useState<DiscountType>('percentage');
+  const [discountType, setDiscountType] = useState<DiscountType | null>(null);
   const [customPercentage, setCustomPercentage] = useState('');
   const [customAmount, setCustomAmount] = useState('');
   const [genderTag, setGenderTag] = useState('');
@@ -61,7 +61,7 @@ export function CheckoutPanel({
     }
 
     return {
-      type: discountType,
+      type: discountType ?? 'percentage',
       value: discountType === 'percentage'
         ? parseFloat(customPercentage) || 0
         : parseFloat(customAmount) || 0,
@@ -79,11 +79,11 @@ export function CheckoutPanel({
   const quickAmountButtons = discounts.filter(d => d.type === 'amount');
 
   const handleQuickPercentage = (percentage: number) => {
-    setCustomPercentage(percentage.toString());
+    setCustomPercentage(prev => prev === percentage.toString() ? '' : percentage.toString());
   };
 
   const handleQuickAmount = (amount: number) => {
-    setCustomAmount(amount.toString());
+    setCustomAmount(prev => prev === amount.toString() ? '' : amount.toString());
   };
 
   const handleConfirm = () => {
@@ -92,7 +92,7 @@ export function CheckoutPanel({
     // 重置狀態
     setCustomPercentage('');
     setCustomAmount('');
-    setDiscountType('percentage');
+    setDiscountType(null);
     setGenderTag('');
     setAgeTag('');
   };
@@ -102,7 +102,7 @@ export function CheckoutPanel({
     // 重置狀態
     setCustomPercentage('');
     setCustomAmount('');
-    setDiscountType('percentage');
+    setDiscountType(null);
     setGenderTag('');
     setAgeTag('');
   };
@@ -251,7 +251,7 @@ export function CheckoutPanel({
               <h3 className="text-2xl font-semibold mb-4">折扣類型</h3>
               <div className="grid grid-cols-3 gap-4">
                 <button
-                  onClick={() => setDiscountType('percentage')}
+                  onClick={() => { setDiscountType(prev => prev === 'percentage' ? null : 'percentage'); setCustomPercentage(''); }}
                   className={`flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all active:scale-95 ${
                     discountType === 'percentage'
                       ? 'border-brand-orange bg-orange-50'
@@ -269,7 +269,7 @@ export function CheckoutPanel({
                 </button>
 
                 <button
-                  onClick={() => setDiscountType('amount')}
+                  onClick={() => { setDiscountType(prev => prev === 'amount' ? null : 'amount'); setCustomAmount(''); }}
                   className={`flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all active:scale-95 ${
                     discountType === 'amount'
                       ? 'border-brand-orange bg-orange-50'
@@ -287,7 +287,7 @@ export function CheckoutPanel({
                 </button>
 
                 <button
-                  onClick={() => setDiscountType('gift')}
+                  onClick={() => setDiscountType(prev => prev === 'gift' ? null : 'gift')}
                   className={`flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all active:scale-95 ${
                     discountType === 'gift'
                       ? 'border-brand-orange bg-orange-50'
