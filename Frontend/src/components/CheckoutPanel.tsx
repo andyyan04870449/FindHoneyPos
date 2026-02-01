@@ -4,13 +4,11 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Separator } from "./ui/separator";
 import { Badge } from "./ui/badge";
-import { X, Percent, DollarSign, Gift, Users } from "lucide-react";
+import { X, Percent, DollarSign, Gift } from "lucide-react";
 import type { OrderItem, DiscountInfo, DiscountType, PosDiscount } from '../types';
 import { ItemActionPanel } from './ItemActionPanel';
 import { useItemActions } from '../hooks/useItemActions';
-
-const GENDER_TAGS = ['男', '女'] as const;
-const AGE_TAGS = ['成人', '學生'] as const;
+import { CustomerTagDialog } from './CustomerTagDialog';
 
 interface CheckoutPanelProps {
   open: boolean;
@@ -32,9 +30,8 @@ export function CheckoutPanel({
   const [discountType, setDiscountType] = useState<DiscountType | null>(null);
   const [customPercentage, setCustomPercentage] = useState('');
   const [customAmount, setCustomAmount] = useState('');
-  const [genderTag, setGenderTag] = useState('');
-  const [ageTag, setAgeTag] = useState('');
   const [selectedCartItemId, setSelectedCartItemId] = useState<string | null>(null);
+  const [showCustomerTag, setShowCustomerTag] = useState(false);
 
   const { giftItem, splitItem, changeItemPrice } = useItemActions({
     orderItems: items,
@@ -45,7 +42,7 @@ export function CheckoutPanel({
   const originalTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   // 計算折扣後金額
-  const calculateDiscount = (): DiscountInfo => {
+  const calculateDiscount = (customerTag?: string): DiscountInfo => {
     let discountAmount = 0;
     let label = '無折扣';
 
@@ -79,7 +76,7 @@ export function CheckoutPanel({
       originalTotal,
       discountAmount,
       finalTotal: Math.max(0, originalTotal - discountAmount),
-      customerTag: [genderTag, ageTag].filter(Boolean).join(',') || undefined,
+      customerTag,
     };
   };
 
@@ -96,27 +93,30 @@ export function CheckoutPanel({
     setCustomAmount(prev => prev === amount.toString() ? '' : amount.toString());
   };
 
-  const handleConfirm = () => {
-    onConfirmCheckout(discount);
-    onOpenChange(false);
-    // 重置狀態
+  const resetState = () => {
     setCustomPercentage('');
     setCustomAmount('');
     setDiscountType(null);
-    setGenderTag('');
-    setAgeTag('');
     setSelectedCartItemId(null);
+    setShowCustomerTag(false);
+  };
+
+  // 點確認結帳 → 開啟客群分析彈窗
+  const handleConfirmClick = () => {
+    setShowCustomerTag(true);
+  };
+
+  // 客群分析確認 → 真正送出
+  const handleCustomerTagConfirm = (customerTag?: string) => {
+    const finalDiscount = calculateDiscount(customerTag);
+    onConfirmCheckout(finalDiscount);
+    onOpenChange(false);
+    resetState();
   };
 
   const handleCancel = () => {
     onOpenChange(false);
-    // 重置狀態
-    setCustomPercentage('');
-    setCustomAmount('');
-    setDiscountType(null);
-    setGenderTag('');
-    setAgeTag('');
-    setSelectedCartItemId(null);
+    resetState();
   };
 
   return (
@@ -138,13 +138,14 @@ export function CheckoutPanel({
                     <div key={item.cartItemId} className="space-y-2">
                       <div
                         onClick={() => onModifyItems && setSelectedCartItemId(prev => prev === item.cartItemId ? null : item.cartItemId)}
-                        className={`flex items-center justify-between py-4 px-4 bg-white rounded-lg transition-all ${
+                        className={`py-3 px-4 bg-white rounded-lg transition-all ${
                           onModifyItems ? 'cursor-pointer hover:bg-gray-50' : ''
                         } ${isSelected ? 'ring-2 ring-brand-orange bg-orange-50/50' : ''}`}
                       >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-gray-900 truncate text-xl">{item.name}</span>
+                        {/* 第一行：品名 + 標籤 + 價格 */}
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                            <span className="font-medium text-gray-900 text-xl">{item.name}</span>
                             {item.isGift && (
                               <Badge className="bg-green-100 text-green-700 text-xs">贈送</Badge>
                             )}
@@ -152,28 +153,31 @@ export function CheckoutPanel({
                               <Badge className="bg-purple-100 text-purple-700 text-xs">{item.itemDiscountLabel}</Badge>
                             )}
                           </div>
-                          {item.addons && item.addons.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {item.addons.map(addon => (
-                                <Badge key={addon.id} variant="secondary" className="text-xs">
-                                  {addon.name} +{addon.price}
-                                </Badge>
-                              ))}
+                          <div className="flex items-center gap-4 text-lg shrink-0">
+                            <div className="text-right w-24">
+                              {item.originalPrice != null && item.originalPrice !== item.price && (
+                                <div className="text-sm text-gray-400 line-through">NT$ {item.originalPrice}</div>
+                              )}
+                              <div className={item.isGift ? 'text-green-600 font-medium' : 'text-gray-600'}>
+                                NT$ {item.price}
+                              </div>
                             </div>
-                          )}
+                            <span className="text-gray-600 w-10 text-center">x{item.quantity}</span>
+                            <span className="font-semibold text-gray-900 w-24 text-right">
+                              NT$ {item.price * item.quantity}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-8 text-lg shrink-0">
-                          <span className={`w-28 text-right ${item.isGift ? 'text-green-600 line-through' : 'text-gray-600'}`}>
-                            NT$ {item.isGift ? (item.originalPrice ?? 0) : item.price}
-                          </span>
-                          {item.isGift && (
-                            <span className="text-green-600 font-medium w-16 text-right">NT$ 0</span>
-                          )}
-                          <span className="text-gray-600 w-16 text-center">x {item.quantity}</span>
-                          <span className="font-semibold text-gray-900 w-32 text-right">
-                            NT$ {item.price * item.quantity}
-                          </span>
-                        </div>
+                        {/* 第二行：加料 */}
+                        {item.addons && item.addons.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {item.addons.map(addon => (
+                              <Badge key={addon.id} variant="secondary" className="text-xs">
+                                {addon.name}{addon.price > 0 ? ` +${addon.price}` : ''}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       {isSelected && onModifyItems && (
                         <ItemActionPanel
@@ -205,43 +209,6 @@ export function CheckoutPanel({
 
           {/* 右側：折扣設定與結算 */}
           <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-            {/* 客群分析 */}
-            <div className="mb-5">
-              <h4 className="text-xl font-medium mb-3">客群分析</h4>
-              <div className="space-y-3">
-                <div className="flex gap-3">
-                  {GENDER_TAGS.map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => setGenderTag(prev => prev === tag ? '' : tag)}
-                      className={`flex-1 h-16 rounded-xl border-2 text-xl font-medium transition-all active:scale-95 ${
-                        genderTag === tag
-                          ? 'border-brand-orange bg-orange-50 text-brand-orange'
-                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex gap-3">
-                  {AGE_TAGS.map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => setAgeTag(prev => prev === tag ? '' : tag)}
-                      className={`flex-1 h-16 rounded-xl border-2 text-xl font-medium transition-all active:scale-95 ${
-                        ageTag === tag
-                          ? 'border-brand-orange bg-orange-50 text-brand-orange'
-                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
             {/* 結算顯示 */}
             <div className="bg-gray-900 text-white rounded-xl p-6 space-y-4 mb-5">
               <div className="flex justify-between items-center text-xl">
@@ -282,7 +249,7 @@ export function CheckoutPanel({
                 取消
               </Button>
               <Button
-                onClick={handleConfirm}
+                onClick={handleConfirmClick}
                 className="flex-[2] h-16 text-xl bg-brand-orange hover:bg-brand-orange-dark text-white"
                 disabled={items.length === 0}
               >
@@ -441,6 +408,12 @@ export function CheckoutPanel({
           </div>
         </div>
       </DialogContent>
+
+      <CustomerTagDialog
+        open={showCustomerTag}
+        onOpenChange={setShowCustomerTag}
+        onConfirm={handleCustomerTagConfirm}
+      />
     </Dialog>
   );
 }
