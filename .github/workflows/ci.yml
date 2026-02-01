@@ -6,7 +6,49 @@ on:
   pull_request:
     branches: [develop]
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
+  test-api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - run: dotnet restore
+
+      - name: Run tests with coverage
+        run: >
+          dotnet test
+          --no-restore
+          --logger "trx;LogFileName=test-results.trx"
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: Api/TestResults/
+
+      - name: Test Report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: API Test Report
+          path: Api/TestResults/**/*.trx
+          reporter: dotnet-trx
+
   build-frontend:
     runs-on: ubuntu-latest
     defaults:
