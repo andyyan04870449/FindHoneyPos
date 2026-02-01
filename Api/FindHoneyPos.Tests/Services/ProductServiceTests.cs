@@ -124,13 +124,14 @@ public class ProductServiceTests : IDisposable
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
 
-        var updated = TestDataBuilder.CreateProduct(name: "新名", price: 200m, isPopular: true);
+        var updated = TestDataBuilder.CreateProduct(name: "新名", price: 200m, isOnPromotion: true, promotionPrice: 150m);
         var result = await _service.UpdateAsync(product.Id, updated);
 
         result.Should().NotBeNull();
         result!.Name.Should().Be("新名");
         result.Price.Should().Be(200m);
-        result.IsPopular.Should().BeTrue();
+        result.IsOnPromotion.Should().BeTrue();
+        result.PromotionPrice.Should().Be(150m);
     }
 
     [Fact]
@@ -161,6 +162,32 @@ public class ProductServiceTests : IDisposable
         var result = await _service.DeleteAsync(999);
 
         result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldUpdatePromotionFields()
+    {
+        var product = TestDataBuilder.CreateProduct(name: "促銷品", price: 100m);
+        _context.Products.Add(product);
+        await _context.SaveChangesAsync();
+
+        var updated = TestDataBuilder.CreateProduct(name: "促銷品", price: 100m, isOnPromotion: true, promotionPrice: 80m);
+        var result = await _service.UpdateAsync(product.Id, updated);
+
+        result.Should().NotBeNull();
+        result!.IsOnPromotion.Should().BeTrue();
+        result.PromotionPrice.Should().Be(80m);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithPromotion_ShouldPersist()
+    {
+        var product = TestDataBuilder.CreateProduct(name: "新促銷品", price: 100m, isOnPromotion: true, promotionPrice: 75m);
+
+        var result = await _service.CreateAsync(product);
+
+        result.IsOnPromotion.Should().BeTrue();
+        result.PromotionPrice.Should().Be(75m);
     }
 
     #endregion

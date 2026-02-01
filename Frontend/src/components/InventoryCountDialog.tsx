@@ -78,14 +78,14 @@ export function InventoryCountDialog({
                 <Package className="h-6 w-6 text-white" />
               </div>
               <div>
-                <DialogTitle className="text-2xl">閉店庫存盤點</DialogTitle>
+                <DialogTitle className="text-2xl">報廢品項登記</DialogTitle>
                 <p className="text-sm text-gray-600 mt-1">
-                  請輸入各品項今日閉店時剩餘數量
+                  請輸入各品項本班次報廢數量
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-sm text-gray-600">總剩餘數量</div>
+              <div className="text-sm text-gray-600">總報廢數量</div>
               <div className="text-3xl font-bold text-brand-orange">{totalCount}</div>
             </div>
           </div>

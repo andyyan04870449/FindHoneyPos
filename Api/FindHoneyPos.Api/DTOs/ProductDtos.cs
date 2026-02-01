@@ -4,7 +4,8 @@ public record CreateProductRequest(
     string Name,
     decimal Price,
     string Status = "Active",
-    bool IsPopular = false,
+    bool IsOnPromotion = false,
+    decimal? PromotionPrice = null,
     string? Category = null,
     int SortOrder = 0
 );
@@ -13,7 +14,8 @@ public record UpdateProductRequest(
     string Name,
     decimal Price,
     string Status,
-    bool IsPopular,
+    bool IsOnPromotion,
+    decimal? PromotionPrice,
     string? Category,
     int SortOrder
 );
@@ -23,7 +25,8 @@ public record ProductResponse(
     string Name,
     decimal Price,
     string Status,
-    bool IsPopular,
+    bool IsOnPromotion,
+    decimal? PromotionPrice,
     string? Category,
     int SortOrder,
     DateTime CreatedAt,

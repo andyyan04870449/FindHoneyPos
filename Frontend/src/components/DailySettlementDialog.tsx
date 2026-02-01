@@ -72,7 +72,7 @@ export function DailySettlementDialog({
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-2">
             <Calculator className="h-6 w-6 text-brand-orange" />
-            日結帳報表
+            關班報表
           </DialogTitle>
           <p className="text-sm text-gray-500 mt-2">
             {new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
@@ -241,19 +241,19 @@ export function DailySettlementDialog({
             </div>
           </div>
 
-          {/* 閉店盤點 */}
+          {/* 報廢登記 */}
           {inventoryData && Object.keys(inventoryData).length > 0 && (
             <div className="bg-gray-50 border-2 border-gray-300 rounded-xl overflow-hidden mt-4">
               <div className="bg-gray-200 px-6 py-4">
                 <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                   <Package className="h-5 w-5 text-teal-600" />
-                  閉店盤點
+                  報廢登記
                 </h3>
               </div>
               <div className="bg-white">
                 <div className="bg-gray-100 px-4 py-3 font-semibold text-sm text-gray-700 grid grid-cols-2 gap-4 border-b-2 border-gray-300">
                   <div>品項名稱</div>
-                  <div className="text-right">剩餘數量</div>
+                  <div className="text-right">報廢數量</div>
                 </div>
                 <div className="divide-y divide-gray-200">
                   {Object.entries(inventoryData).map(([productId, quantity]) => {
@@ -284,7 +284,7 @@ export function DailySettlementDialog({
               className="h-12 min-w-[140px]"
             >
               <ArrowLeft className="h-5 w-5 mr-2" />
-              返回盤點
+              返回報廢登記
             </Button>
           )}
           <Button

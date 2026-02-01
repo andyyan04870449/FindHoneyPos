@@ -57,7 +57,10 @@ public class OrdersController : ControllerBase
             i.Price,
             i.Quantity,
             i.Subtotal,
-            i.Addons.Select(a => new OrderItemAddonResponse(a.ProductName, a.Price)).ToList()
+            i.Addons.Select(a => new OrderItemAddonResponse(a.ProductName, a.Price)).ToList(),
+            i.IsGift,
+            i.OriginalPrice,
+            i.ItemDiscountLabel
         )).ToList(),
         o.Subtotal,
         o.DiscountAmount,

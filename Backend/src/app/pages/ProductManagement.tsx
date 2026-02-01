@@ -4,6 +4,7 @@ import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
 import { Input } from '@/app/components/ui/input';
 import { Badge } from '@/app/components/ui/badge';
+import { Switch } from '@/app/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,8 @@ export function ProductManagement() {
   const [formData, setFormData] = useState({
     name: '',
     price: '',
+    isOnPromotion: false,
+    promotionPrice: '',
   });
 
   const fetchProducts = useCallback(async () => {
@@ -47,7 +50,7 @@ export function ProductManagement() {
 
   const handleAddProduct = () => {
     setEditingProduct(null);
-    setFormData({ name: '', price: '' });
+    setFormData({ name: '', price: '', isOnPromotion: false, promotionPrice: '' });
     setIsDialogOpen(true);
   };
 
@@ -56,6 +59,8 @@ export function ProductManagement() {
     setFormData({
       name: product.name,
       price: product.price.toString(),
+      isOnPromotion: product.isOnPromotion,
+      promotionPrice: product.promotionPrice?.toString() ?? '',
     });
     setIsDialogOpen(true);
   };
@@ -88,17 +93,43 @@ export function ProductManagement() {
       return;
     }
 
+    const price = parseFloat(formData.price);
+    const promotionPrice = formData.promotionPrice ? parseFloat(formData.promotionPrice) : null;
+
+    if (formData.isOnPromotion && promotionPrice != null) {
+      if (promotionPrice < 0) {
+        toast.error('促銷價不能小於 0');
+        return;
+      }
+      if (promotionPrice >= price) {
+        toast.error('促銷價必須小於原價');
+        return;
+      }
+    }
+
+    const body = {
+      name: formData.name,
+      price,
+      isOnPromotion: formData.isOnPromotion,
+      promotionPrice: formData.isOnPromotion ? promotionPrice : null,
+    };
+
     try {
       if (editingProduct) {
         await api(`/api/admin/products/${editingProduct.id}`, {
           method: 'PUT',
-          body: JSON.stringify({ name: formData.name, price: parseFloat(formData.price) }),
+          body: JSON.stringify({
+            ...body,
+            status: editingProduct.status,
+            category: editingProduct.category ?? null,
+            sortOrder: editingProduct.sortOrder,
+          }),
         });
         toast.success('商品已更新');
       } else {
         await api('/api/admin/products', {
           method: 'POST',
-          body: JSON.stringify({ name: formData.name, price: parseFloat(formData.price) }),
+          body: JSON.stringify(body),
         });
         toast.success('商品已新增');
       }
@@ -150,6 +181,7 @@ export function ProductManagement() {
               <tr>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">商品名稱</th>
                 <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">價格</th>
+                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">促銷</th>
                 <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">狀態</th>
                 <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">操作</th>
               </tr>
@@ -159,6 +191,15 @@ export function ProductManagement() {
                 <tr key={product.id} className="border-b hover:bg-gray-50">
                   <td className="py-3 px-4 font-medium">{product.name}</td>
                   <td className="py-3 px-4 text-right font-semibold">NT$ {product.price}</td>
+                  <td className="py-3 px-4 text-center">
+                    {product.isOnPromotion ? (
+                      <Badge className="bg-red-100 text-red-700">
+                        促銷 NT$ {product.promotionPrice}
+                      </Badge>
+                    ) : (
+                      <span className="text-gray-400 text-sm">-</span>
+                    )}
+                  </td>
                   <td className="py-3 px-4 text-center">
                     <Badge
                       variant={product.status === 'Active' ? 'default' : 'secondary'}
@@ -225,6 +266,29 @@ export function ProductManagement() {
                 placeholder="0"
               />
             </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="isOnPromotion">促銷</Label>
+              <Switch
+                id="isOnPromotion"
+                checked={formData.isOnPromotion}
+                onCheckedChange={(checked) => setFormData({ ...formData, isOnPromotion: checked })}
+              />
+            </div>
+            {formData.isOnPromotion && (
+              <div>
+                <Label htmlFor="promotionPrice">促銷價格 (NT$)</Label>
+                <Input
+                  id="promotionPrice"
+                  type="number"
+                  value={formData.promotionPrice}
+                  onChange={(e) => setFormData({ ...formData, promotionPrice: e.target.value })}
+                  placeholder="0"
+                />
+                {formData.price && formData.promotionPrice && parseFloat(formData.promotionPrice) >= parseFloat(formData.price) && (
+                  <p className="text-sm text-red-500 mt-1">促銷價必須小於原價</p>
+                )}
+              </div>
+            )}
           </div>
 
           <DialogFooter>

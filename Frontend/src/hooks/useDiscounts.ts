@@ -4,11 +4,12 @@ import type { PosDiscount } from '../types';
 import { posApi } from '../services/api';
 import { logger } from '../utils/logger';
 
-export function useDiscounts() {
+export function useDiscounts(isAuthenticated: boolean = true) {
   const [discounts, setDiscounts] = useState<PosDiscount[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     setLoading(true);
     posApi
       .getActiveDiscounts()
@@ -21,7 +22,7 @@ export function useDiscounts() {
         toast.error('載入折扣失敗，請檢查網路連線');
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [isAuthenticated]);
 
   return { discounts, loading };
 }

@@ -3,6 +3,7 @@ using System;
 using FindHoneyPos.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FindHoneyPos.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260201095358_RenamePopularToPromotion")]
+    partial class RenamePopularToPromotion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -434,17 +437,8 @@ namespace FindHoneyPos.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("IsGift")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("ItemDiscountLabel")
-                        .HasColumnType("text");
-
                     b.Property<int>("OrderId")
                         .HasColumnType("integer");
-
-                    b.Property<decimal?>("OriginalPrice")
-                        .HasColumnType("numeric");
 
                     b.Property<decimal>("Price")
                         .HasPrecision(10, 2)
@@ -522,8 +516,7 @@ namespace FindHoneyPos.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsOnPromotion")
-                        .HasColumnType("boolean")
-                        .HasColumnName("IsOnPromotion");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -535,9 +528,7 @@ namespace FindHoneyPos.Infrastructure.Migrations
                         .HasColumnType("numeric(10,2)");
 
                     b.Property<decimal?>("PromotionPrice")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)")
-                        .HasColumnName("PromotionPrice");
+                        .HasColumnType("numeric");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer");

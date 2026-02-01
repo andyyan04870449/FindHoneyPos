@@ -27,19 +27,19 @@ public static class DataSeeder
             new() { Name = "純起司", Price = 60, Category = "純系列", SortOrder = 4 },
             // 甜味
             new() { Name = "杏仁蜜糖", Price = 60, Category = "甜味", SortOrder = 5 },
-            new() { Name = "OREO卡士達", Price = 70, IsPopular = true, Category = "甜味", SortOrder = 6 },
+            new() { Name = "OREO卡士達", Price = 70, IsOnPromotion = true, PromotionPrice = 60, Category = "甜味", SortOrder = 6 },
             new() { Name = "奶油紅豆", Price = 70, Category = "甜味", SortOrder = 7 },
             new() { Name = "焙茶麻糬", Price = 70, Category = "甜味", SortOrder = 8 },
             new() { Name = "抹茶紅豆", Price = 70, Category = "甜味", SortOrder = 9 },
-            new() { Name = "紅豆麻糬", Price = 70, IsPopular = true, Category = "甜味", SortOrder = 10 },
+            new() { Name = "紅豆麻糬", Price = 70, IsOnPromotion = true, PromotionPrice = 60, Category = "甜味", SortOrder = 10 },
             // 冰鯛
             new() { Name = "牛奶卡士達冰", Price = 65, Category = "冰鯛", SortOrder = 11 },
             new() { Name = "巧克力卡士達冰", Price = 65, Category = "冰鯛", SortOrder = 12 },
             // 鹹味
-            new() { Name = "起司火腿", Price = 70, IsPopular = true, Category = "鹹味", SortOrder = 13 },
+            new() { Name = "起司火腿", Price = 70, IsOnPromotion = true, PromotionPrice = 60, Category = "鹹味", SortOrder = 13 },
             new() { Name = "起司玉米", Price = 70, Category = "鹹味", SortOrder = 14 },
             new() { Name = "鮪魚玉米", Price = 70, Category = "鹹味", SortOrder = 15 },
-            new() { Name = "起司薯泥", Price = 70, IsPopular = true, Category = "鹹味", SortOrder = 16 },
+            new() { Name = "起司薯泥", Price = 70, IsOnPromotion = true, PromotionPrice = 60, Category = "鹹味", SortOrder = 16 },
             // 加料
             new() { Name = "加料-OREO餅乾", Price = 10, Category = "加料", SortOrder = 17 },
             new() { Name = "加料-巧克力豆", Price = 10, Category = "加料", SortOrder = 18 },

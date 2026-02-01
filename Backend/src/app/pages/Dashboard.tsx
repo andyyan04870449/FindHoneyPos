@@ -174,7 +174,7 @@ export function Dashboard() {
         </TabsTrigger>
         <TabsTrigger value="inventory">
           <Package className="h-4 w-4 mr-1" />
-          庫存分析
+          銷售與報廢
         </TabsTrigger>
       </TabsList>
 
@@ -579,9 +579,9 @@ export function Dashboard() {
       <TabsContent value="inventory" className="space-y-6">
         {inventorySummary.length > 0 ? (
           <>
-            {/* 售出 vs 剩餘 雙 BarChart */}
+            {/* 售出 vs 報廢 雙 BarChart */}
             <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">售出 vs 剩餘對照</h3>
+              <h3 className="text-lg font-semibold mb-4">售出 vs 報廢對照</h3>
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={inventorySummary}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -590,21 +590,21 @@ export function Dashboard() {
                   <Tooltip />
                   <Legend />
                   <Bar dataKey="soldQuantity" fill="#3b82f6" name="售出數量" />
-                  <Bar dataKey="remainingQuantity" fill="#10b981" name="剩餘數量" />
+                  <Bar dataKey="remainingQuantity" fill="#ef4444" name="報廢數量" />
                 </BarChart>
               </ResponsiveContainer>
             </Card>
 
             {/* 明細表格 */}
             <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">庫存明細</h3>
+              <h3 className="text-lg font-semibold mb-4">銷售與報廢明細</h3>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">品項</th>
                       <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">售出</th>
-                      <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">剩餘</th>
+                      <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">報廢</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -623,8 +623,8 @@ export function Dashboard() {
         ) : (
           <Card className="p-12 text-center text-gray-500">
             <Package className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p className="text-lg font-medium">尚無庫存資料</p>
-            <p className="text-sm mt-1">完成日結盤點後即可在此檢視庫存分析</p>
+            <p className="text-lg font-medium">尚無資料</p>
+            <p className="text-sm mt-1">完成關班作業後即可在此檢視分析</p>
           </Card>
         )}
       </TabsContent>

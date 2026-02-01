@@ -86,6 +86,9 @@ public class PosOrdersController : ControllerBase
                 Quantity = i.Quantity,
                 Subtotal = (i.Price + addonTotal) * i.Quantity,
                 Addons = addons,
+                IsGift = i.IsGift ?? false,
+                OriginalPrice = i.OriginalPrice,
+                ItemDiscountLabel = i.ItemDiscountLabel,
             };
         }).ToList();
 

@@ -25,6 +25,7 @@ import type {
   ShiftStatusResponse,
   CloseShiftRequest,
   CloseShiftResponse,
+  ShiftOrder,
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL as string | undefined;
@@ -223,6 +224,11 @@ export const posApi = {
     return fetchApi<ShiftStatusResponse>(
       `/api/pos/shift/current?deviceId=${encodeURIComponent(deviceId)}`
     );
+  },
+
+  /** 取得班次訂單列表 */
+  getShiftOrders(shiftId: number): Promise<ShiftOrder[]> {
+    return fetchApi<ShiftOrder[]>(`/api/pos/shift/${shiftId}/orders`);
   },
 
   /** 關班結帳 */

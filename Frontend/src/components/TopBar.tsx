@@ -159,7 +159,7 @@ export function TopBar({
           >
             <p className="text-xs text-gray-500">今日訂單</p>
             <Badge className="bg-brand-orange text-white text-sm px-2 py-0.5">
-              {orderCount} 筆
+              {currentShift ? currentShift.totalOrders : orderCount} 筆
             </Badge>
           </div>
         </div>
@@ -212,7 +212,7 @@ export function TopBar({
             className="w-full justify-start h-14 text-base hover:bg-gray-50"
           >
             <Calculator className="h-5 w-5 mr-3" />
-            日結帳
+            關班作業
           </Button>
 
           {onLogout && (

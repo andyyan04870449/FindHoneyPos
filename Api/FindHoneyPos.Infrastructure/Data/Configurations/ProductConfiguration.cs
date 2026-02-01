@@ -14,6 +14,8 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.Price).HasPrecision(10, 2);
         builder.Property(p => p.Status).HasConversion<string>().HasMaxLength(20);
         builder.Property(p => p.Category).HasMaxLength(50);
+        builder.Property(p => p.IsOnPromotion).HasColumnName("IsOnPromotion");
+        builder.Property(p => p.PromotionPrice).HasColumnName("PromotionPrice").HasPrecision(10, 2);
         builder.HasIndex(p => p.Status);
         builder.HasIndex(p => p.SortOrder);
     }

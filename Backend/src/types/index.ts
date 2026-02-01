@@ -3,6 +3,10 @@ export interface Product {
   name: string;
   price: number;
   status: 'Active' | 'Inactive';
+  isOnPromotion: boolean;
+  promotionPrice?: number;
+  category?: string;
+  sortOrder: number;
 }
 
 export interface OrderItemAddon {
@@ -16,6 +20,9 @@ export interface OrderItem {
   quantity: number;
   subtotal: number;
   addons: OrderItemAddon[];
+  isGift: boolean;
+  originalPrice?: number;
+  itemDiscountLabel?: string;
 }
 
 export interface Order {
@@ -30,6 +37,7 @@ export interface Order {
   paymentMethod: string;
   discountType?: string;
   discountValue?: number;
+  customerTag?: string;
 }
 
 export interface Discount {

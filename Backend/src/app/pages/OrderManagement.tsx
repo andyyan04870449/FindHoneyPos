@@ -230,18 +230,42 @@ export function OrderManagement() {
                     {selectedOrder.status === 'completed' ? '已完成' : '已取消'}
                   </Badge>
                 </div>
+                {selectedOrder.customerTag && (
+                  <div>
+                    <p className="text-sm text-gray-600">客戶標籤</p>
+                    <Badge variant="secondary">{selectedOrder.customerTag}</Badge>
+                  </div>
+                )}
               </div>
 
               <div>
                 <h4 className="font-semibold mb-3">訂單明細</h4>
                 <div className="space-y-2">
                   {selectedOrder.items.map((item, index) => (
-                    <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className={`p-3 rounded-lg ${item.isGift ? 'bg-purple-50 border border-purple-200' : 'bg-gray-50'}`}>
                       <div className="flex items-center justify-between">
-                        <p className="font-medium">{item.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{item.name}</p>
+                          {item.isGift && (
+                            <Badge className="bg-purple-100 text-purple-700 text-xs">招待</Badge>
+                          )}
+                          {item.itemDiscountLabel && !item.isGift && (
+                            <Badge className="bg-red-100 text-red-700 text-xs">{item.itemDiscountLabel}</Badge>
+                          )}
+                        </div>
                         <p className="font-semibold">NT$ {item.subtotal}</p>
                       </div>
-                      <p className="text-sm text-gray-600">NT$ {item.price} x {item.quantity}</p>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        {item.originalPrice != null && item.originalPrice !== item.price ? (
+                          <>
+                            <span className="line-through text-gray-400">NT$ {item.originalPrice}</span>
+                            <span className="text-red-600">NT$ {item.price}</span>
+                            <span>x {item.quantity}</span>
+                          </>
+                        ) : (
+                          <span>NT$ {item.price} x {item.quantity}</span>
+                        )}
+                      </div>
                       {item.addons?.length > 0 && (
                         <p className="text-xs text-orange-600 mt-1">
                           {item.addons.map((a) => `+ ${a.name} NT$${a.price}`).join(' / ')}

@@ -4,11 +4,12 @@ import type { Addon } from '../types';
 import { posApi } from '../services/api';
 import { logger } from '../utils/logger';
 
-export function useAddons() {
+export function useAddons(isAuthenticated: boolean = true) {
   const [addons, setAddons] = useState<Addon[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     setLoading(true);
     posApi
       .getAddons()
@@ -21,7 +22,7 @@ export function useAddons() {
         toast.error('載入加料失敗，請檢查網路連線');
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [isAuthenticated]);
 
   return { addons, loading };
 }
