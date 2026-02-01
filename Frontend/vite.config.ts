@@ -6,6 +6,10 @@
 
   export default defineConfig({
     plugins: [tailwindcss(), react()],
+    define: {
+      __APP_VERSION__: JSON.stringify(process.env.APP_VERSION || 'dev'),
+      __GIT_COMMIT__: JSON.stringify(process.env.GIT_COMMIT || 'unknown'),
+    },
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
       alias: {

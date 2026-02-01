@@ -14,6 +14,7 @@ import {
   WifiOff,
 } from "lucide-react";
 import { logger } from "../utils/logger";
+import { BUILD_INFO } from "../constants";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -120,6 +121,10 @@ export function SettingsDialog({
                   <div className="flex justify-between">
                     <span className="text-gray-600">菜單版本:</span>
                     <Badge>{menuVersion}</Badge>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">系統版本:</span>
+                    <Badge variant="outline">{BUILD_INFO}</Badge>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">本地儲存:</span>

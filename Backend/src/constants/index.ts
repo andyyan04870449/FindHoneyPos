@@ -1,4 +1,6 @@
-export const APP_VERSION = 'v2.1.3';
+export const APP_VERSION = __APP_VERSION__;
+export const GIT_COMMIT = __GIT_COMMIT__;
+export const BUILD_INFO = `${APP_VERSION}+${GIT_COMMIT}`;
 
 export const PAYMENT_METHODS = ['現金', '信用卡', 'LINE Pay'] as const;
 
