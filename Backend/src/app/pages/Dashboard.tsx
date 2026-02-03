@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { TrendingUp, ShoppingCart, DollarSign, Package, Loader2, Plus, Percent, Users, BarChart3, FileText } from 'lucide-react';
 import { Card } from '@/app/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/app/components/ui/tabs';
@@ -19,8 +19,9 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { api } from '@/lib/api';
-import type { TopProduct } from '@/types';
+import type { TopProduct, Order } from '@/types';
 import { DailyReport } from '@/app/pages/DailyReport';
+import { OrderNotification } from '@/app/components/OrderNotification';
 
 interface KPIItem {
   title: string;
@@ -78,6 +79,8 @@ const addonKpiIcons = [DollarSign, Plus, Percent];
 const GENDER_COLORS = ['#3b82f6', '#ec4899', '#9ca3af'];
 const AGE_COLORS = ['#f97316', '#8b5cf6', '#9ca3af'];
 
+const ORDER_POLL_INTERVAL = 5000; // 5秒輪詢一次
+
 export function Dashboard() {
   const [kpiData, setKpiData] = useState<KPIItem[]>([]);
   const [salesData, setSalesData] = useState<SalesTrendItem[]>([]);
@@ -90,50 +93,97 @@ export function Dashboard() {
   const [inventorySummary, setInventorySummary] = useState<InventorySummaryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [kpi, trend, top] = await Promise.all([
-          api<KPIItem[]>('/api/admin/dashboard/kpi'),
-          api<SalesTrendItem[]>('/api/admin/dashboard/sales-trend?days=7'),
-          api<TopProduct[]>('/api/admin/dashboard/top-products?limit=5'),
-        ]);
-        setKpiData(kpi);
-        setSalesData(trend);
-        setTopProducts(top);
-      } catch (err) {
-        console.error('Failed to fetch dashboard data:', err);
-      }
-      try {
-        const [addonKpi, addonTrend, addons, combos] = await Promise.all([
-          api<KPIItem[]>('/api/admin/dashboard/addon-kpi'),
-          api<AddonTrendItem[]>('/api/admin/reports/addon-trend?days=7'),
-          api<TopAddon[]>('/api/admin/reports/top-addons'),
-          api<AddonCombination[]>('/api/admin/reports/addon-combinations'),
-        ]);
-        setAddonKpiData(addonKpi);
-        setAddonTrendData(addonTrend);
-        setTopAddons(addons);
-        setAddonCombinations(combos);
-      } catch (err) {
-        console.error('Failed to fetch addon data:', err);
-      }
-      try {
-        const tagKpi = await api<CustomerTagKpi>('/api/admin/dashboard/customer-tag-kpi');
-        setCustomerTagKpi(tagKpi);
-      } catch (err) {
-        console.error('Failed to fetch customer tag data:', err);
-      }
-      try {
-        const inventory = await api<InventorySummaryItem[]>('/api/admin/reports/inventory-summary?date=today');
-        setInventorySummary(inventory);
-      } catch (err) {
-        console.error('Failed to fetch inventory summary:', err);
-      }
+  // 新訂單通知（支援多筆排隊）
+  const [orderQueue, setOrderQueue] = useState<Order[]>([]);
+  const lastOrderIdRef = useRef<number | null>(null);
+
+  // 新增訂單到佇列
+  const addOrderToQueue = (order: Order) => {
+    setOrderQueue(prev => [...prev, order]);
+  };
+
+  // 移除已顯示完的訂單
+  const removeOrderFromQueue = (orderId: number) => {
+    setOrderQueue(prev => prev.filter(o => o.id !== orderId));
+  };
+
+  // 獲取儀表板數據
+  const fetchDashboardData = useCallback(async (isInitial = false) => {
+    try {
+      const [kpi, trend, top] = await Promise.all([
+        api<KPIItem[]>('/api/admin/dashboard/kpi'),
+        api<SalesTrendItem[]>('/api/admin/dashboard/sales-trend?days=7'),
+        api<TopProduct[]>('/api/admin/dashboard/top-products?limit=5'),
+      ]);
+      setKpiData(kpi);
+      setSalesData(trend);
+      setTopProducts(top);
+    } catch (err) {
+      console.error('Failed to fetch dashboard data:', err);
+    }
+    try {
+      const [addonKpi, addonTrend, addons, combos] = await Promise.all([
+        api<KPIItem[]>('/api/admin/dashboard/addon-kpi'),
+        api<AddonTrendItem[]>('/api/admin/reports/addon-trend?days=7'),
+        api<TopAddon[]>('/api/admin/reports/top-addons'),
+        api<AddonCombination[]>('/api/admin/reports/addon-combinations'),
+      ]);
+      setAddonKpiData(addonKpi);
+      setAddonTrendData(addonTrend);
+      setTopAddons(addons);
+      setAddonCombinations(combos);
+    } catch (err) {
+      console.error('Failed to fetch addon data:', err);
+    }
+    try {
+      const tagKpi = await api<CustomerTagKpi>('/api/admin/dashboard/customer-tag-kpi');
+      setCustomerTagKpi(tagKpi);
+    } catch (err) {
+      console.error('Failed to fetch customer tag data:', err);
+    }
+    try {
+      const inventory = await api<InventorySummaryItem[]>('/api/admin/reports/inventory-summary?date=today');
+      setInventorySummary(inventory);
+    } catch (err) {
+      console.error('Failed to fetch inventory summary:', err);
+    }
+    if (isInitial) {
       setLoading(false);
     }
-    fetchData();
   }, []);
+
+  // 檢查新訂單
+  const checkNewOrders = useCallback(async () => {
+    try {
+      const orders = await api<Order[]>('/api/admin/orders?pageSize=1');
+      if (orders.length > 0) {
+        const latestOrder = orders[0];
+        // 首次載入時記錄最新訂單 ID，不彈通知
+        if (lastOrderIdRef.current === null) {
+          lastOrderIdRef.current = latestOrder.id;
+        } else if (latestOrder.id > lastOrderIdRef.current) {
+          // 有新訂單，加入佇列
+          lastOrderIdRef.current = latestOrder.id;
+          addOrderToQueue(latestOrder);
+        }
+      }
+    } catch (err) {
+      // 靜默失敗，不影響儀表板
+    }
+  }, []);
+
+  // 初始載入 + 定時輪詢
+  useEffect(() => {
+    // 初始載入
+    fetchDashboardData(true);
+    checkNewOrders();
+    // 定時輪詢（每5秒更新儀表板數據 + 檢查新訂單）
+    const interval = setInterval(() => {
+      fetchDashboardData();
+      checkNewOrders();
+    }, ORDER_POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, [fetchDashboardData, checkNewOrders]);
 
   if (loading) {
     return (
@@ -628,6 +678,18 @@ export function Dashboard() {
           </Card>
         )}
       </TabsContent>
+
+      {/* 新訂單通知佇列 */}
+      <div className="fixed top-4 right-4 z-50 flex flex-col gap-3 transition-all duration-300">
+        {orderQueue.map((order, index) => (
+          <OrderNotification
+            key={order.id}
+            order={order}
+            index={index}
+            onClose={() => removeOrderFromQueue(order.id)}
+          />
+        ))}
+      </div>
     </Tabs>
   );
 }
