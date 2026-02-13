@@ -92,7 +92,20 @@ public class PosOrdersController : ControllerBase
             };
         }).ToList();
 
-        var subtotal = items.Sum(i => i.Subtotal);
+        // Subtotal = 原始金額（折扣前），用 OriginalPrice 計算
+        var subtotal = items.Sum(i =>
+        {
+            var addonTotal = i.Addons.Sum(a => a.Price);
+            var unitPrice = i.OriginalPrice ?? i.Price;
+            return (unitPrice + addonTotal) * i.Quantity;
+        });
+
+        // actualTotal = 單品折扣後金額（用實際 Price）
+        var actualTotal = items.Sum(i => i.Subtotal);
+
+        // 單品折扣 = 原始金額 - 單品折扣後金額
+        var itemDiscount = subtotal - actualTotal;
+
         DiscountType? discountType = null;
         if (!string.IsNullOrEmpty(request.DiscountType))
         {
@@ -105,14 +118,18 @@ public class PosOrdersController : ControllerBase
             };
         }
 
-        var total = subtotal - request.DiscountAmount;
+        // 總折扣 = 單品折扣 + 訂單折扣
+        var totalDiscountAmount = itemDiscount + request.DiscountAmount;
+
+        // 實收 = 原始金額 - 總折扣
+        var total = subtotal - totalDiscountAmount;
         if (discountType == Core.Enums.DiscountType.Gift) total = 0;
 
         return new Order
         {
             DeviceId = request.DeviceId,
             Subtotal = subtotal,
-            DiscountAmount = request.DiscountAmount,
+            DiscountAmount = totalDiscountAmount,
             DiscountType = discountType,
             DiscountValue = request.DiscountValue,
             Total = Math.Max(0, total),

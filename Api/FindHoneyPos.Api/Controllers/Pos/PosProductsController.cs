@@ -26,7 +26,7 @@ public class PosProductsController : ControllerBase
 
         var products = all
             .Where(p => p.Category != AddonCategory)
-            .Select(p => new { id = p.Id.ToString(), name = p.Name, price = p.Price, isOnPromotion = p.IsOnPromotion, promotionPrice = p.PromotionPrice, category = p.Category });
+            .Select(p => new { id = p.Id.ToString(), name = p.Name, price = p.Price, isOnPromotion = p.IsOnPromotion, promotionPrice = p.PromotionPrice, category = p.Category, cardColor = p.CardColor });
 
         return Ok(ApiResponse<IEnumerable<object>>.Ok(products));
     }

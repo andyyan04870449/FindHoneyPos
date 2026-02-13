@@ -11,10 +11,12 @@ public class Product
     public bool IsOnPromotion { get; set; }
     public decimal? PromotionPrice { get; set; }
     public string? Category { get; set; }
+    public string? CardColor { get; set; }
     public int SortOrder { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     public ICollection<InventoryCount> InventoryCounts { get; set; } = new List<InventoryCount>();
+    public ICollection<ProductRecipe> Recipes { get; set; } = new List<ProductRecipe>();
 }

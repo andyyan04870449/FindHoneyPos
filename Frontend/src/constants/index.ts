@@ -19,5 +19,5 @@ export const APP_VERSION = __APP_VERSION__;
 export const GIT_COMMIT = __GIT_COMMIT__;
 export const BUILD_INFO = `${APP_VERSION}+${GIT_COMMIT}`;
 
-export const INITIAL_ORDER_COUNT = 125;
+export const INITIAL_ORDER_COUNT = 0;
 

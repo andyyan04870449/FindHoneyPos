@@ -29,14 +29,39 @@ public class ReportService : IReportService
         var yesterday = date.AddDays(-1);
         var (yStart, yEnd) = GetDateRange(yesterday);
 
-        var todayOrders = _context.Orders.Where(o => o.Timestamp >= start && o.Timestamp < end && o.Status == OrderStatus.Completed);
+        var todayOrders = await _context.Orders
+            .Include(o => o.Items)
+            .Where(o => o.Timestamp >= start && o.Timestamp < end && o.Status == OrderStatus.Completed)
+            .ToListAsync();
         var yesterdayOrders = _context.Orders.Where(o => o.Timestamp >= yStart && o.Timestamp < yEnd && o.Status == OrderStatus.Completed);
 
-        var orderCount = await todayOrders.CountAsync();
-        var totalRevenue = await todayOrders.SumAsync(o => (decimal?)o.Total) ?? 0;
-        var totalDiscount = await todayOrders.SumAsync(o => (decimal?)o.DiscountAmount) ?? 0;
-        var netRevenue = totalRevenue;
-        var avgOrderValue = orderCount > 0 ? totalRevenue / orderCount : 0;
+        var orderCount = todayOrders.Count;
+
+        // 計算總折扣（Gift 類型特殊處理，避免重複計算）
+        var totalDiscount = todayOrders.Sum(o =>
+        {
+            if (o.DiscountType == DiscountType.Gift)
+            {
+                // Gift 類型：折扣 = 訂單原價，不重複計算單品折扣
+                return o.Subtotal;
+            }
+            else
+            {
+                // 其他類型：單品折扣 + 訂單折扣
+                var itemDiscount = o.Items
+                    .Where(i => i.OriginalPrice.HasValue)
+                    .Sum(i => (i.OriginalPrice!.Value - i.Price) * i.Quantity);
+                return itemDiscount + o.DiscountAmount;
+            }
+        });
+
+        // 實收金額
+        var netRevenue = todayOrders.Sum(o => o.Total);
+
+        // 原始營業額（折扣前）
+        var totalRevenue = netRevenue + totalDiscount;
+
+        var avgOrderValue = orderCount > 0 ? netRevenue / orderCount : 0;
 
         var stockSold = await _context.OrderItems
             .Include(oi => oi.Order)
@@ -46,7 +71,7 @@ public class ReportService : IReportService
         var yOrderCount = await yesterdayOrders.CountAsync();
         var yRevenue = await yesterdayOrders.SumAsync(o => (decimal?)o.Total) ?? 0;
 
-        var revenueChange = yRevenue > 0 ? Math.Round((double)((totalRevenue - yRevenue) / yRevenue * 100), 1) : 0;
+        var revenueChange = yRevenue > 0 ? Math.Round((double)((netRevenue - yRevenue) / yRevenue * 100), 1) : 0;
         var ordersChange = yOrderCount > 0 ? Math.Round((double)(orderCount - yOrderCount) / yOrderCount * 100, 1) : 0;
 
         return new
@@ -233,11 +258,13 @@ public class ReportService : IReportService
 
         var genderTags = new[] { "男", "女" };
         var ageTags = new[] { "成人", "學生" };
+        var relationTags = new[] { "攤商", "親友" };
 
         return new
         {
             gender = BuildTagDistribution(orders, genderTags),
-            age = BuildTagDistribution(orders, ageTags)
+            age = BuildTagDistribution(orders, ageTags),
+            relation = BuildTagDistribution(orders, relationTags)
         };
     }
 

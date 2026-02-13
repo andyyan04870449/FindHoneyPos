@@ -7,6 +7,7 @@ public record CreateProductRequest(
     bool IsOnPromotion = false,
     decimal? PromotionPrice = null,
     string? Category = null,
+    string? CardColor = null,
     int SortOrder = 0
 );
 
@@ -17,6 +18,7 @@ public record UpdateProductRequest(
     bool IsOnPromotion,
     decimal? PromotionPrice,
     string? Category,
+    string? CardColor,
     int SortOrder
 );
 
@@ -28,7 +30,10 @@ public record ProductResponse(
     bool IsOnPromotion,
     decimal? PromotionPrice,
     string? Category,
+    string? CardColor,
     int SortOrder,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );
+
+public record ReorderRequest(int[] ProductIds);

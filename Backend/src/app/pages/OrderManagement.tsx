@@ -22,15 +22,15 @@ import type { Order } from '@/types';
 import { api } from '@/lib/api';
 
 interface OrderStats {
-  total: number;
-  completed: number;
-  cancelled: number;
+  totalOrders: number;
+  completedOrders: number;
+  cancelledOrders: number;
   totalRevenue: number;
 }
 
 export function OrderManagement() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [stats, setStats] = useState<OrderStats>({ total: 0, completed: 0, cancelled: 0, totalRevenue: 0 });
+  const [stats, setStats] = useState<OrderStats>({ totalOrders: 0, completedOrders: 0, cancelledOrders: 0, totalRevenue: 0 });
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -86,15 +86,15 @@ export function OrderManagement() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-4">
           <p className="text-sm text-gray-600">總訂單數</p>
-          <p className="text-2xl font-bold mt-2">{stats.total}</p>
+          <p className="text-2xl font-bold mt-2">{stats.totalOrders}</p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-gray-600">已完成</p>
-          <p className="text-2xl font-bold mt-2 text-green-600">{stats.completed}</p>
+          <p className="text-2xl font-bold mt-2 text-green-600">{stats.completedOrders}</p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-gray-600">已取消</p>
-          <p className="text-2xl font-bold mt-2 text-red-600">{stats.cancelled}</p>
+          <p className="text-2xl font-bold mt-2 text-red-600">{stats.cancelledOrders}</p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-gray-600">總營業額</p>

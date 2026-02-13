@@ -422,7 +422,8 @@ export default function App() {
       />
 
       <div className="flex-1 flex flex-col lg:flex-row gap-2 md:gap-3 lg:gap-4 p-2 md:p-3 lg:p-4 min-h-0">
-        <div className="flex-1 lg:w-[35%] min-h-0">
+        {/* 左側：菜單 */}
+        <div className="flex-1 lg:w-[60%] min-h-0">
           <ProductGrid
             products={products}
             onProductClick={handleProductClick}
@@ -430,47 +431,48 @@ export default function App() {
           />
         </div>
 
-        <div className="hidden lg:block lg:w-[40%] min-h-0">
-          <OrderPreview
-            items={orderItems}
-            onUpdateQuantity={updateQuantity}
-            onClearAll={clearAllItems}
-            onOpenCheckout={handleOpenCheckout}
-            onCustomize={handleOpenCustomize}
-            showActions={false}
-          />
-        </div>
+        {/* 右側：訂單明細 + 結帳操作 */}
+        <div className="hidden lg:flex lg:w-[40%] min-h-0 flex-col gap-4">
+          {/* 訂單明細 */}
+          <div className="flex-1 min-h-0">
+            <OrderPreview
+              items={orderItems}
+              onUpdateQuantity={updateQuantity}
+              onClearAll={clearAllItems}
+              onOpenCheckout={handleOpenCheckout}
+              onCustomize={handleOpenCustomize}
+              showActions={false}
+            />
+          </div>
 
-        <div className="hidden lg:flex lg:w-[25%] min-h-0 flex-col gap-4">
-          <Card className="flex-1 flex flex-col justify-between bg-white border border-gray-200 p-6">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">結帳操作</h2>
-              <Separator className="mb-4" />
-              <div className="text-center py-6">
-                <div className="text-base text-gray-500 mb-2">合計金額</div>
-                <div className="text-4xl font-bold text-brand-orange">
+          {/* 結帳操作 */}
+          <Card className="shrink-0 flex flex-col bg-white border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="text-sm text-gray-500">合計金額</div>
+                <div className="text-2xl font-bold text-brand-orange">
                   NT$ {orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)}
                 </div>
-                <div className="text-base text-gray-500 mt-2">
-                  共 {orderItems.reduce((sum, item) => sum + item.quantity, 0)} 項商品
-                </div>
+              </div>
+              <div className="text-sm text-gray-500">
+                共 {orderItems.reduce((sum, item) => sum + item.quantity, 0)} 項商品
               </div>
             </div>
-            <div className="space-y-3">
-              <button
-                onClick={handleOpenCheckout}
-                className="w-full bg-gray-900 text-white p-5 rounded-xl text-center hover:bg-gray-800 active:scale-[0.98] transition-all"
-              >
-                <div className="text-lg font-bold">結帳</div>
-              </button>
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={clearAllItems}
-                className="w-full h-14 text-base border-2 hover:bg-gray-50 active:scale-[0.98]"
+                className="flex-1 h-12 text-base border-2 hover:bg-gray-50 active:scale-[0.98]"
               >
                 <Trash2 className="h-5 w-5 mr-2" />
-                清空購物車
+                清空
               </Button>
+              <button
+                onClick={handleOpenCheckout}
+                className="flex-1 bg-gray-900 text-white h-12 rounded-lg text-center hover:bg-gray-800 active:scale-[0.98] transition-all font-bold"
+              >
+                結帳
+              </button>
             </div>
           </Card>
         </div>

@@ -286,6 +286,53 @@ namespace FindHoneyPos.Infrastructure.Migrations
                     b.ToTable("InventoryCounts", (string)null);
                 });
 
+            modelBuilder.Entity("FindHoneyPos.Core.Entities.LineAdmin", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ApprovedById")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LineUserId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PictureUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedById");
+
+                    b.HasIndex("LineUserId")
+                        .IsUnique();
+
+                    b.ToTable("LineAdmins");
+                });
+
             modelBuilder.Entity("FindHoneyPos.Core.Entities.LineOaSetting", b =>
                 {
                     b.Property<int>("Id")
@@ -321,6 +368,151 @@ namespace FindHoneyPos.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("LineOaSettings", (string)null);
+                });
+
+            modelBuilder.Entity("FindHoneyPos.Core.Entities.Material", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("AlertThreshold")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("CurrentStock")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("Materials", (string)null);
+                });
+
+            modelBuilder.Entity("FindHoneyPos.Core.Entities.MaterialAlert", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("AlertThreshold")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsNotified")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsResolved")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MaterialId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("NotifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("StockLevel")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("IsResolved");
+
+                    b.HasIndex("MaterialId");
+
+                    b.ToTable("MaterialAlerts", (string)null);
+                });
+
+            modelBuilder.Entity("FindHoneyPos.Core.Entities.MaterialStockRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChangeType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("MaterialId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("OperatorId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<decimal>("StockAfter")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<decimal>("StockBefore")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangeType");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("MaterialId");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("MaterialStockRecords", (string)null);
                 });
 
             modelBuilder.Entity("FindHoneyPos.Core.Entities.MessageTemplate", b =>
@@ -514,6 +706,9 @@ namespace FindHoneyPos.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CardColor")
+                        .HasColumnType("text");
+
                     b.Property<string>("Category")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -557,6 +752,34 @@ namespace FindHoneyPos.Infrastructure.Migrations
                     b.HasIndex("Status");
 
                     b.ToTable("Products", (string)null);
+                });
+
+            modelBuilder.Entity("FindHoneyPos.Core.Entities.ProductRecipe", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("MaterialId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MaterialId");
+
+                    b.HasIndex("ProductId", "MaterialId")
+                        .IsUnique();
+
+                    b.ToTable("ProductRecipes", (string)null);
                 });
 
             modelBuilder.Entity("FindHoneyPos.Core.Entities.Shift", b =>
@@ -653,6 +876,45 @@ namespace FindHoneyPos.Infrastructure.Migrations
                     b.Navigation("Settlement");
                 });
 
+            modelBuilder.Entity("FindHoneyPos.Core.Entities.LineAdmin", b =>
+                {
+                    b.HasOne("FindHoneyPos.Core.Entities.AdminUser", "ApprovedBy")
+                        .WithMany()
+                        .HasForeignKey("ApprovedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ApprovedBy");
+                });
+
+            modelBuilder.Entity("FindHoneyPos.Core.Entities.MaterialAlert", b =>
+                {
+                    b.HasOne("FindHoneyPos.Core.Entities.Material", "Material")
+                        .WithMany("Alerts")
+                        .HasForeignKey("MaterialId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Material");
+                });
+
+            modelBuilder.Entity("FindHoneyPos.Core.Entities.MaterialStockRecord", b =>
+                {
+                    b.HasOne("FindHoneyPos.Core.Entities.Material", "Material")
+                        .WithMany("StockRecords")
+                        .HasForeignKey("MaterialId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FindHoneyPos.Core.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Material");
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("FindHoneyPos.Core.Entities.Order", b =>
                 {
                     b.HasOne("FindHoneyPos.Core.Entities.Shift", "Shift")
@@ -699,6 +961,25 @@ namespace FindHoneyPos.Infrastructure.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("FindHoneyPos.Core.Entities.ProductRecipe", b =>
+                {
+                    b.HasOne("FindHoneyPos.Core.Entities.Material", "Material")
+                        .WithMany("Recipes")
+                        .HasForeignKey("MaterialId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FindHoneyPos.Core.Entities.Product", "Product")
+                        .WithMany("Recipes")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Material");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("FindHoneyPos.Core.Entities.Shift", b =>
                 {
                     b.HasOne("FindHoneyPos.Core.Entities.DailySettlement", "Settlement")
@@ -721,6 +1002,15 @@ namespace FindHoneyPos.Infrastructure.Migrations
                     b.Navigation("Shift");
                 });
 
+            modelBuilder.Entity("FindHoneyPos.Core.Entities.Material", b =>
+                {
+                    b.Navigation("Alerts");
+
+                    b.Navigation("Recipes");
+
+                    b.Navigation("StockRecords");
+                });
+
             modelBuilder.Entity("FindHoneyPos.Core.Entities.MessageTemplate", b =>
                 {
                     b.Navigation("BroadcastHistories");
@@ -741,6 +1031,8 @@ namespace FindHoneyPos.Infrastructure.Migrations
                     b.Navigation("InventoryCounts");
 
                     b.Navigation("OrderItems");
+
+                    b.Navigation("Recipes");
                 });
 
             modelBuilder.Entity("FindHoneyPos.Core.Entities.Shift", b =>

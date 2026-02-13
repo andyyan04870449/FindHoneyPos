@@ -50,6 +50,7 @@ public class ProductService : IProductService
         existing.IsOnPromotion = product.IsOnPromotion;
         existing.PromotionPrice = product.PromotionPrice;
         existing.Category = product.Category;
+        existing.CardColor = product.CardColor;
         existing.SortOrder = product.SortOrder;
         existing.UpdatedAt = DateTime.UtcNow;
 
@@ -81,4 +82,24 @@ public class ProductService : IProductService
             .Where(p => p.Status == ProductStatus.Active)
             .OrderBy(p => p.SortOrder)
             .ToListAsync();
+
+    public async Task ReorderAsync(int[] productIds)
+    {
+        var products = await _context.Products
+            .Where(p => productIds.Contains(p.Id))
+            .ToListAsync();
+
+        var now = DateTime.UtcNow;
+        for (int i = 0; i < productIds.Length; i++)
+        {
+            var product = products.FirstOrDefault(p => p.Id == productIds[i]);
+            if (product != null)
+            {
+                product.SortOrder = i;
+                product.UpdatedAt = now;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+    }
 }

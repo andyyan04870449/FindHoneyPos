@@ -4,6 +4,7 @@ import { Users, Check } from "lucide-react";
 
 const GENDER_TAGS = ['男', '女'] as const;
 const AGE_TAGS = ['成人', '學生'] as const;
+const RELATION_TAGS = ['攤商', '親友'] as const;
 
 interface CustomerTagDialogProps {
   open: boolean;
@@ -18,18 +19,14 @@ export function CustomerTagDialog({
 }: CustomerTagDialogProps) {
   const [genderTag, setGenderTag] = useState('');
   const [ageTag, setAgeTag] = useState('');
+  const [relationTag, setRelationTag] = useState('');
 
   const handleConfirm = () => {
-    const tag = [genderTag, ageTag].filter(Boolean).join(',') || undefined;
+    const tag = [genderTag, ageTag, relationTag].filter(Boolean).join(',') || undefined;
     onConfirm(tag);
     setGenderTag('');
     setAgeTag('');
-  };
-
-  const handleSkip = () => {
-    onConfirm(undefined);
-    setGenderTag('');
-    setAgeTag('');
+    setRelationTag('');
   };
 
   const tagButton = (tag: string, selected: boolean, onClick: () => void) => (
@@ -63,21 +60,29 @@ export function CustomerTagDialog({
               </div>
             </div>
 
-            {/* 標籤選擇 */}
-            <div className="space-y-6">
-              <div>
-                <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">性別</p>
-                <div className="flex gap-4">
+            {/* 標籤選擇 - 三個有框線的選項框 */}
+            <div className="space-y-4">
+              <div className="border-2 border-gray-200 rounded-xl p-4">
+                <p className="text-sm font-semibold text-gray-500 text-center mb-3">性別</p>
+                <div className="flex gap-3">
                   {GENDER_TAGS.map((tag) =>
                     tagButton(tag, genderTag === tag, () => setGenderTag(prev => prev === tag ? '' : tag))
                   )}
                 </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">年齡</p>
-                <div className="flex gap-4">
+              <div className="border-2 border-gray-200 rounded-xl p-4">
+                <p className="text-sm font-semibold text-gray-500 text-center mb-3">年齡</p>
+                <div className="flex gap-3">
                   {AGE_TAGS.map((tag) =>
                     tagButton(tag, ageTag === tag, () => setAgeTag(prev => prev === tag ? '' : tag))
+                  )}
+                </div>
+              </div>
+              <div className="border-2 border-gray-200 rounded-xl p-4">
+                <p className="text-sm font-semibold text-gray-500 text-center mb-3">關係</p>
+                <div className="flex gap-3">
+                  {RELATION_TAGS.map((tag) =>
+                    tagButton(tag, relationTag === tag, () => setRelationTag(prev => prev === tag ? '' : tag))
                   )}
                 </div>
               </div>

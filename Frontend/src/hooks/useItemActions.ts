@@ -24,7 +24,8 @@ export function useItemActions({ orderItems, setOrderItems }: UseItemActionsOpti
       newItems[idx] = {
         ...item,
         originalPrice: item.originalPrice ?? item.price,
-        price: item.addons?.reduce((sum, a) => sum + a.price, 0) ?? 0,
+        price: 0,
+        addons: item.addons?.map(a => ({ ...a, price: 0 })),
         isGift: true,
         itemDiscountLabel: '贈送',
       };
@@ -33,17 +34,18 @@ export function useItemActions({ orderItems, setOrderItems }: UseItemActionsOpti
       newItems[idx] = { ...item, quantity: item.quantity - 1 };
       // 新增贈送行
       const giftId = generateUniqueCartItemId(item.cartItemId, 'gift');
-      const giftItem: OrderItem = {
+      const giftEntry: OrderItem = {
         ...item,
         cartItemId: giftId,
         quantity: 1,
         originalPrice: item.price,
-        price: item.addons?.reduce((sum, a) => sum + a.price, 0) ?? 0,
+        price: 0,
+        addons: item.addons?.map(a => ({ ...a, price: 0 })),
         isGift: true,
         itemDiscountLabel: '贈送',
         splitSource: item.cartItemId,
       };
-      newItems.splice(idx + 1, 0, giftItem);
+      newItems.splice(idx + 1, 0, giftEntry);
     }
 
     setOrderItems(newItems);

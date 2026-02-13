@@ -165,18 +165,6 @@ export function TopBar({
         </div>
 
         <div className="p-4 space-y-2">
-          <Button
-            variant="ghost"
-            onClick={() => {
-              onUpdateMenu();
-              setMenuOpen(false);
-            }}
-            className="w-full justify-start h-14 text-base hover:bg-gray-50"
-          >
-            <RefreshCw className="h-5 w-5 mr-3" />
-            更新菜單
-          </Button>
-
           {!isOnline && unsyncedCount > 0 && (
             <Button
               variant="ghost"
@@ -194,18 +182,6 @@ export function TopBar({
           <Button
             variant="ghost"
             onClick={() => {
-              setSettingsOpen(true);
-              setMenuOpen(false);
-            }}
-            className="w-full justify-start h-14 text-base hover:bg-gray-50"
-          >
-            <Settings className="h-5 w-5 mr-3" />
-            系統設定
-          </Button>
-
-          <Button
-            variant="ghost"
-            onClick={() => {
               onOpenSettlement();
               setMenuOpen(false);
             }}
@@ -215,9 +191,34 @@ export function TopBar({
             關班作業
           </Button>
 
+          <div className="border-t my-2" />
+
+          <Button
+            variant="ghost"
+            onClick={() => {
+              onUpdateMenu();
+              setMenuOpen(false);
+            }}
+            className="w-full justify-start h-14 text-base hover:bg-gray-50"
+          >
+            <RefreshCw className="h-5 w-5 mr-3" />
+            更新菜單
+          </Button>
+
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setSettingsOpen(true);
+              setMenuOpen(false);
+            }}
+            className="w-full justify-start h-14 text-base hover:bg-gray-50"
+          >
+            <Settings className="h-5 w-5 mr-3" />
+            系統設定
+          </Button>
+
           {onLogout && (
             <>
-              <div className="border-t my-2" />
               {userName && (
                 <div className="px-4 py-2 text-sm text-gray-500">
                   登入帳號：{userName}

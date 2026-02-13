@@ -11,5 +11,5 @@ public interface IOrderService
     Task<IEnumerable<Order>> BatchCreateAsync(IEnumerable<Order> orders);
     Task<IEnumerable<Order>> GetByShiftIdAsync(int shiftId);
     Task<object> GetStatsAsync();
-    Task<int> GetNextDailySequenceAsync();
+    Task<int> GetNextShiftSequenceAsync(int shiftId);
 }

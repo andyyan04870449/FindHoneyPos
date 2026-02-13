@@ -9,10 +9,12 @@ using Microsoft.EntityFrameworkCore;
 public class DailySettlementService : IDailySettlementService
 {
     private readonly AppDbContext _context;
+    private readonly ILineWebhookService _lineWebhookService;
 
-    public DailySettlementService(AppDbContext context)
+    public DailySettlementService(AppDbContext context, ILineWebhookService lineWebhookService)
     {
         _context = context;
+        _lineWebhookService = lineWebhookService;
     }
 
     public async Task<DailySettlement> SubmitAsync(DailySettlement settlement)
@@ -32,17 +34,49 @@ public class DailySettlementService : IDailySettlementService
         var start = lastSettlement?.SubmittedAt ?? dayStart;
 
         var orders = await _context.Orders
+            .Include(o => o.Items)
             .Where(o => o.Timestamp >= start && o.Timestamp < end && o.Status == OrderStatus.Completed)
             .ToListAsync();
 
+        // 計算總折扣（Gift 類型特殊處理，避免重複計算）
+        var totalDiscount = orders.Sum(o =>
+        {
+            if (o.DiscountType == DiscountType.Gift)
+            {
+                // Gift 類型：折扣 = 訂單原價，不重複計算單品折扣
+                return o.Subtotal;
+            }
+            else
+            {
+                // 其他類型：單品折扣 + 訂單折扣
+                var itemDiscount = o.Items
+                    .Where(i => i.OriginalPrice.HasValue)
+                    .Sum(i => (i.OriginalPrice!.Value - i.Price) * i.Quantity);
+                return itemDiscount + o.DiscountAmount;
+            }
+        });
+
+        // 實收金額 = orders.Total 的總和
+        var netRevenue = orders.Sum(o => o.Total);
+
         settlement.TotalOrders = orders.Count;
-        settlement.TotalRevenue = orders.Sum(o => o.Total);
-        settlement.TotalDiscount = orders.Sum(o => o.DiscountAmount);
-        settlement.NetRevenue = settlement.TotalRevenue;
+        settlement.TotalRevenue = netRevenue + totalDiscount;  // 原始營業額（折扣前）
+        settlement.TotalDiscount = totalDiscount;
+        settlement.NetRevenue = netRevenue;  // 實收
         settlement.SubmittedAt = DateTime.UtcNow;
 
         _context.DailySettlements.Add(settlement);
         await _context.SaveChangesAsync();
+
+        // 發送 LINE 管理員通知
+        await _lineWebhookService.SendAdminNotificationAsync(
+            $"📋 日結完成\n" +
+            $"日期: {settlement.Date:yyyy-MM-dd}\n" +
+            $"營業額: ${settlement.TotalRevenue:N0}\n" +
+            $"折扣: ${settlement.TotalDiscount:N0}\n" +
+            $"實收: ${settlement.NetRevenue:N0}\n" +
+            $"訂單數: {settlement.TotalOrders}");
+
         return settlement;
     }
 

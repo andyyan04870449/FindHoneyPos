@@ -19,9 +19,9 @@ export function CartItemRow({ item, index, onQuantityChange, onCustomize, varian
   const minWidthClass = variant === 'mobile' ? 'min-w-20' : 'min-w-[70px]';
 
   return (
-    <div className="bg-gray-50 rounded-xl p-4">
+    <div className="bg-gray-50 rounded-xl px-4 py-2">
       {/* 上行：流水號 + 品名 + 小計 */}
-      <div className="flex items-start gap-2 mb-2">
+      <div className="flex items-start gap-2 mb-1">
         <span className="shrink-0 w-7 text-sm font-bold text-gray-400 text-center leading-6">
           {index}
         </span>
@@ -47,33 +47,33 @@ export function CartItemRow({ item, index, onQuantityChange, onCustomize, varian
       </div>
 
       {/* 下行：加料按鈕 + 數量控制 */}
-      <div className="flex items-center justify-end gap-2 ml-9">
+      <div className="flex items-center justify-end gap-1.5 ml-9">
         {onCustomize && (
           <button
             onClick={() => onCustomize(item)}
-            className="shrink-0 px-3 py-1.5 rounded-xl text-sm text-center font-bold text-brand-orange bg-brand-orange/10 hover:bg-brand-orange/20 active:bg-brand-orange/30 border-2 border-brand-orange/30 transition-colors active:scale-95"
+            className="shrink-0 px-2 py-0.5 rounded-lg text-xs text-center font-bold text-brand-orange bg-brand-orange/10 hover:bg-brand-orange/20 active:bg-brand-orange/30 border border-brand-orange/30 transition-colors active:scale-95"
           >
             加料
           </button>
         )}
 
-        <div className={`flex items-center ${gapClass} bg-white rounded-lg p-1 shadow-sm`}>
+        <div className="flex items-center gap-1 bg-white rounded-md p-0.5 shadow-sm">
           <button
             onClick={() => onQuantityChange(item, -1)}
-            className={`flex items-center justify-center ${btnSize} rounded-lg bg-gray-100 hover:bg-gray-200 active:bg-gray-300 transition-colors active:scale-95`}
+            className="flex items-center justify-center w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 active:bg-gray-300 transition-colors active:scale-95"
           >
-            <Minus className={`${iconSize} text-gray-700`} strokeWidth={2.5} />
+            <Minus className="h-3 w-3 text-gray-700" strokeWidth={2.5} />
           </button>
 
-          <span className="w-8 text-center font-bold text-base text-gray-900">
+          <span className="w-5 text-center font-bold text-sm text-gray-900">
             {item.quantity}
           </span>
 
           <button
             onClick={() => onQuantityChange(item, 1)}
-            className={`flex items-center justify-center ${btnSize} rounded-lg bg-brand-orange hover:bg-brand-orange/90 active:bg-brand-orange/80 transition-colors active:scale-95`}
+            className="flex items-center justify-center w-5 h-5 rounded bg-brand-orange hover:bg-brand-orange/90 active:bg-brand-orange/80 transition-colors active:scale-95"
           >
-            <Plus className={`${iconSize} text-white`} strokeWidth={2.5} />
+            <Plus className="h-3 w-3 text-white" strokeWidth={2.5} />
           </button>
         </div>
       </div>
