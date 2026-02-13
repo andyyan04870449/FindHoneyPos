@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { TrendingUp, ShoppingCart, DollarSign, Package, Loader2, Plus, Percent, Users, BarChart3, FileText } from 'lucide-react';
+import { TrendingUp, ShoppingCart, DollarSign, Package, Loader2, Plus, Percent, Users, BarChart3, FileText, AlertTriangle, Boxes } from 'lucide-react';
 import { Card } from '@/app/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/app/components/ui/tabs';
 import {
@@ -18,8 +18,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { api } from '@/lib/api';
-import type { TopProduct, Order } from '@/types';
+import { api, getDashboardMaterialStatus, getDashboardLowStockAlerts, getLowStockMaterials } from '@/lib/api';
+import type { Material } from '@/types';
+import type { TopProduct, Order, MaterialStatusSummary, MaterialAlert } from '@/types';
 import { DailyReport } from '@/app/pages/DailyReport';
 import { OrderNotification } from '@/app/components/OrderNotification';
 
@@ -91,6 +92,9 @@ export function Dashboard() {
   const [addonCombinations, setAddonCombinations] = useState<AddonCombination[]>([]);
   const [customerTagKpi, setCustomerTagKpi] = useState<CustomerTagKpi | null>(null);
   const [inventorySummary, setInventorySummary] = useState<InventorySummaryItem[]>([]);
+  const [materialStatus, setMaterialStatus] = useState<MaterialStatusSummary | null>(null);
+  const [lowStockMaterials, setLowStockMaterials] = useState<Material[]>([]);
+  const [materialAlerts, setMaterialAlerts] = useState<MaterialAlert[]>([]);
   const [loading, setLoading] = useState(true);
 
   // 新訂單通知（支援多筆排隊）
@@ -146,6 +150,18 @@ export function Dashboard() {
       setInventorySummary(inventory);
     } catch (err) {
       console.error('Failed to fetch inventory summary:', err);
+    }
+    try {
+      const [status, lowStock, alerts] = await Promise.all([
+        getDashboardMaterialStatus(),
+        getLowStockMaterials(),
+        getDashboardLowStockAlerts(),
+      ]);
+      setMaterialStatus(status);
+      setLowStockMaterials(lowStock);
+      setMaterialAlerts(alerts);
+    } catch (err) {
+      console.error('Failed to fetch material data:', err);
     }
     if (isInitial) {
       setLoading(false);
@@ -225,6 +241,15 @@ export function Dashboard() {
         <TabsTrigger value="inventory">
           <Package className="h-4 w-4 mr-1" />
           銷售與報廢
+        </TabsTrigger>
+        <TabsTrigger value="material-stock" className="relative">
+          <Boxes className="h-4 w-4 mr-1" />
+          原物料庫存
+          {materialStatus && materialStatus.activeAlertCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+              {materialStatus.activeAlertCount}
+            </span>
+          )}
         </TabsTrigger>
       </TabsList>
 
@@ -675,6 +700,111 @@ export function Dashboard() {
             <Package className="h-12 w-12 mx-auto mb-4 text-gray-300" />
             <p className="text-lg font-medium">尚無資料</p>
             <p className="text-sm mt-1">完成關班作業後即可在此檢視分析</p>
+          </Card>
+        )}
+      </TabsContent>
+
+      {/* ===== 原物料庫存 ===== */}
+      <TabsContent value="material-stock" className="space-y-6">
+        {/* KPI Cards */}
+        {materialStatus && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Card className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">原料總數</p>
+                  <p className="text-2xl font-bold">{materialStatus.totalCount}</p>
+                </div>
+                <div className="bg-blue-100 p-3 rounded-lg">
+                  <Boxes className="h-5 w-5 text-blue-600" />
+                </div>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">庫存正常</p>
+                  <p className="text-2xl font-bold text-green-600">{materialStatus.normalCount}</p>
+                </div>
+                <div className="bg-green-100 p-3 rounded-lg">
+                  <Package className="h-5 w-5 text-green-600" />
+                </div>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">低庫存警示</p>
+                  <p className="text-2xl font-bold text-yellow-600">{materialStatus.lowStockCount}</p>
+                </div>
+                <div className="bg-yellow-100 p-3 rounded-lg">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                </div>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">已缺貨</p>
+                  <p className="text-2xl font-bold text-red-600">{materialStatus.outOfStockCount}</p>
+                </div>
+                <div className="bg-red-100 p-3 rounded-lg">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* 低庫存警示列表 */}
+        {lowStockMaterials.length > 0 ? (
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              低庫存原物料
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">原物料名稱</th>
+                    <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">單位</th>
+                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">現有庫存</th>
+                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">警戒值</th>
+                    <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">狀態</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lowStockMaterials.map((material) => (
+                    <tr key={material.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4 font-medium">{material.name}</td>
+                      <td className="py-3 px-4 text-center">{material.unit}</td>
+                      <td className={`py-3 px-4 text-right font-semibold ${material.currentStock <= 0 ? 'text-red-600' : 'text-yellow-600'}`}>
+                        {material.currentStock.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4 text-right text-gray-500">{material.alertThreshold.toLocaleString()}</td>
+                      <td className="py-3 px-4 text-center">
+                        {material.currentStock <= 0 ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                            缺貨
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                            低庫存
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        ) : (
+          <Card className="p-12 text-center text-gray-500">
+            <Package className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <p className="text-lg font-medium">庫存狀況良好</p>
+            <p className="text-sm mt-1">目前沒有低庫存的原物料</p>
           </Card>
         )}
       </TabsContent>

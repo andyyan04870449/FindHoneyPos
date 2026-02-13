@@ -11,10 +11,12 @@ using Microsoft.AspNetCore.Mvc;
 public class DashboardController : ControllerBase
 {
     private readonly IDashboardService _dashboardService;
+    private readonly IMaterialService _materialService;
 
-    public DashboardController(IDashboardService dashboardService)
+    public DashboardController(IDashboardService dashboardService, IMaterialService materialService)
     {
         _dashboardService = dashboardService;
+        _materialService = materialService;
     }
 
     [HttpGet("kpi")]
@@ -36,4 +38,25 @@ public class DashboardController : ControllerBase
     [HttpGet("customer-tag-kpi")]
     public async Task<IActionResult> GetCustomerTagKpi()
         => Ok(ApiResponse<object>.Ok(await _dashboardService.GetCustomerTagKpiAsync()));
+
+    [HttpGet("material-status")]
+    public async Task<IActionResult> GetMaterialStatus()
+        => Ok(ApiResponse<object>.Ok(await _materialService.GetMaterialStatusAsync()));
+
+    [HttpGet("low-stock-alerts")]
+    public async Task<IActionResult> GetLowStockAlerts()
+    {
+        var alerts = await _materialService.GetActiveAlertsAsync();
+        var response = alerts.Select(a => new
+        {
+            a.Id,
+            a.MaterialId,
+            MaterialName = a.Material.Name,
+            Unit = a.Material.Unit,
+            a.StockLevel,
+            a.AlertThreshold,
+            a.CreatedAt
+        });
+        return Ok(ApiResponse<object>.Ok(response));
+    }
 }

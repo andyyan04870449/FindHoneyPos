@@ -15,6 +15,9 @@ import { RegisterPage } from '@/app/pages/RegisterPage';
 import { AccountManagement } from '@/app/pages/AccountManagement';
 import { AuditLogPage } from '@/app/pages/AuditLogPage';
 import { IncentiveManagement } from '@/app/pages/IncentiveManagement';
+import { MaterialManagement } from '@/app/pages/MaterialManagement';
+import { RecipeManagement } from '@/app/pages/RecipeManagement';
+import { StockOperations } from '@/app/pages/StockOperations';
 
 export default function App() {
   return (
@@ -37,6 +40,9 @@ export default function App() {
               <Route path="incentive" element={<IncentiveManagement />} />
               <Route path="accounts" element={<AccountManagement />} />
               <Route path="audit-logs" element={<AuditLogPage />} />
+              <Route path="materials" element={<MaterialManagement />} />
+              <Route path="recipes" element={<RecipeManagement />} />
+              <Route path="stock-operations" element={<StockOperations />} />
             </Route>
           </Route>
         </Routes>

@@ -80,15 +80,17 @@ export function ProductGrid({
 
       {/* 商品網格 - 可滾動區域 */}
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2 md:gap-3 lg:gap-4 pb-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2 md:gap-3 lg:gap-4 p-1 pb-3">
           {filteredProducts.map((product) => (
             <ProductCard
               key={product.id}
+              id={product.id}
               name={product.name}
               price={product.price}
               quantity={getProductQuantity(product.id)}
               isOnPromotion={product.isOnPromotion}
               promotionPrice={product.promotionPrice}
+              cardColor={product.cardColor}
               onClick={() => onProductClick(product)}
             />
           ))}
