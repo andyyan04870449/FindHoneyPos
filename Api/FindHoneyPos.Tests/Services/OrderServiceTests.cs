@@ -3,20 +3,24 @@ namespace FindHoneyPos.Tests.Services;
 using FindHoneyPos.Core.Constants;
 using FindHoneyPos.Core.Entities;
 using FindHoneyPos.Core.Enums;
+using FindHoneyPos.Core.Interfaces;
 using FindHoneyPos.Infrastructure.Data;
 using FindHoneyPos.Infrastructure.Services;
 using FindHoneyPos.Tests.Helpers;
 using FluentAssertions;
+using Moq;
 
 public class OrderServiceTests : IDisposable
 {
     private readonly AppDbContext _context;
     private readonly OrderService _service;
+    private readonly Mock<IMaterialService> _materialServiceMock;
 
     public OrderServiceTests()
     {
         _context = TestDbContextFactory.Create();
-        _service = new OrderService(_context);
+        _materialServiceMock = new Mock<IMaterialService>();
+        _service = new OrderService(_context, _materialServiceMock.Object);
     }
 
     public void Dispose() => _context.Dispose();
