@@ -39,10 +39,14 @@ export function DailySettlementDialog({
   });
 
   // 若有班次，使用後端即時統計；否則走前端計算
-  const totalRevenue = currentShift ? currentShift.totalRevenue : todayOrders.reduce((sum, order) => sum + order.total, 0);
-  const totalDiscount = currentShift ? currentShift.totalDiscount : todayOrders.reduce((sum, order) => {
-    return sum + (order.subtotal - order.total);
-  }, 0);
+  // netRevenue = 實收金額（折扣後），totalRevenue = 原始營業額（折扣前）
+  const netRevenue = currentShift
+    ? currentShift.netRevenue
+    : todayOrders.reduce((sum, order) => sum + order.total, 0);
+  const totalDiscount = currentShift
+    ? currentShift.totalDiscount
+    : todayOrders.reduce((sum, order) => sum + (order.subtotal - order.total), 0);
+  const totalRevenue = netRevenue + totalDiscount; // 折扣前金額 = 實收 + 折扣
   const totalOrders = currentShift ? currentShift.totalOrders : todayOrders.length;
 
   // 計算已售出的商品數量（只計算實際收錢的訂單）— 激勵以天為單位，仍用前端計算
@@ -155,7 +159,7 @@ export function DailySettlementDialog({
                 </div>
                 <div className="flex justify-between items-center pb-3 border-b border-gray-300">
                   <span className="text-base text-gray-600">折扣前金額</span>
-                  <span className="text-xl font-semibold text-gray-700">NT$ {(totalRevenue + totalDiscount).toLocaleString()}</span>
+                  <span className="text-xl font-semibold text-gray-700">NT$ {totalRevenue.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-base text-gray-600">優惠折扣</span>
@@ -170,7 +174,7 @@ export function DailySettlementDialog({
               <div className="text-center">
                 <p className="text-base text-gray-600 mb-2">應收現金</p>
                 <p className="text-5xl font-bold text-brand-orange mb-4">
-                  NT$ {totalRevenue.toLocaleString()}
+                  NT$ {netRevenue.toLocaleString()}
                 </p>
                 <div className="h-px bg-brand-orange/30 my-4"></div>
                 <p className="text-sm text-gray-500">請核對實際收到的現金金額</p>
