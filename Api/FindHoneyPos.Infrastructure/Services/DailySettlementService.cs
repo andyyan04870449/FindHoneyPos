@@ -36,9 +36,9 @@ public class DailySettlementService : IDailySettlementService
             .ToListAsync();
 
         settlement.TotalOrders = orders.Count;
-        settlement.TotalRevenue = orders.Sum(o => o.Total);
+        settlement.TotalRevenue = orders.Sum(o => o.Subtotal);  // 折扣前總額
         settlement.TotalDiscount = orders.Sum(o => o.DiscountAmount);
-        settlement.NetRevenue = settlement.TotalRevenue;
+        settlement.NetRevenue = settlement.TotalRevenue - settlement.TotalDiscount;  // 實收
         settlement.SubmittedAt = DateTime.UtcNow;
 
         _context.DailySettlements.Add(settlement);
