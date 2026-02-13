@@ -6,6 +6,7 @@ export interface Product {
   isOnPromotion: boolean;
   promotionPrice?: number;
   category?: string;
+  cardColor?: string;
   sortOrder: number;
 }
 
@@ -185,4 +186,68 @@ export interface InventoryCountItem {
 
 export interface SettlementDetail extends SettlementRecord {
   inventoryCounts: InventoryCountItem[];
+}
+
+// Material Inventory Types
+export type MaterialStatus = 'Active' | 'Inactive';
+export type StockChangeType = 'In' | 'Out' | 'Adjust' | 'Waste';
+
+export interface Material {
+  id: number;
+  name: string;
+  unit: string;
+  currentStock: number;
+  alertThreshold: number;
+  status: MaterialStatus;
+  isLowStock: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductRecipe {
+  id: number;
+  productId: number;
+  materialId: number;
+  materialName: string;
+  materialUnit: string;
+  quantity: number;
+}
+
+export interface ProductWithRecipes {
+  id: number;
+  name: string;
+  category?: string;
+  recipes: ProductRecipe[];
+}
+
+export interface MaterialStockRecord {
+  id: number;
+  materialId: number;
+  materialName: string;
+  changeType: StockChangeType;
+  quantity: number;
+  stockBefore: number;
+  stockAfter: number;
+  orderId?: number;
+  note?: string;
+  createdAt: string;
+}
+
+export interface MaterialAlert {
+  id: number;
+  materialId: number;
+  materialName: string;
+  unit: string;
+  stockLevel: number;
+  alertThreshold: number;
+  isNotified: boolean;
+  createdAt: string;
+}
+
+export interface MaterialStatusSummary {
+  totalCount: number;
+  normalCount: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+  activeAlertCount: number;
 }

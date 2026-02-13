@@ -21,6 +21,10 @@ public class AppDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<IncentiveSetting> IncentiveSettings => Set<IncentiveSetting>();
     public DbSet<Shift> Shifts => Set<Shift>();
+    public DbSet<Material> Materials => Set<Material>();
+    public DbSet<ProductRecipe> ProductRecipes => Set<ProductRecipe>();
+    public DbSet<MaterialStockRecord> MaterialStockRecords => Set<MaterialStockRecord>();
+    public DbSet<MaterialAlert> MaterialAlerts => Set<MaterialAlert>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

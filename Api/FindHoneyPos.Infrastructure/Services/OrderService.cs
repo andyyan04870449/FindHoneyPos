@@ -10,10 +10,12 @@ using Microsoft.EntityFrameworkCore;
 public class OrderService : IOrderService
 {
     private readonly AppDbContext _context;
+    private readonly IMaterialService _materialService;
 
-    public OrderService(AppDbContext context)
+    public OrderService(AppDbContext context, IMaterialService materialService)
     {
         _context = context;
+        _materialService = materialService;
     }
 
     public async Task<(IEnumerable<Order> Orders, int Total)> GetAllAsync(
@@ -84,6 +86,10 @@ public class OrderService : IOrderService
 
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
+
+        // 扣減原物料庫存
+        await _materialService.ConsumeByOrderAsync(order);
+
         return order;
     }
 

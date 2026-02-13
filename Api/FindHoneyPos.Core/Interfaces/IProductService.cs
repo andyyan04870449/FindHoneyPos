@@ -11,4 +11,5 @@ public interface IProductService
     Task<bool> DeleteAsync(int id);
     Task<Product?> ToggleStatusAsync(int id);
     Task<IEnumerable<Product>> GetActiveAsync();
+    Task ReorderAsync(int[] productIds);
 }

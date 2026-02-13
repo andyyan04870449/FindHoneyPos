@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Search, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, GripVertical } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
 import { Input } from '@/app/components/ui/input';
@@ -16,7 +16,132 @@ import {
 import { Label } from '@/app/components/ui/label';
 import { toast } from 'sonner';
 import type { Product } from '@/types';
-import { api } from '@/lib/api';
+import { api, reorderProducts } from '@/lib/api';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// 20 色對應表
+const CARD_COLORS = [
+  { value: 'red', label: '紅色', bg: 'bg-red-600' },
+  { value: 'orange', label: '橙色', bg: 'bg-orange-600' },
+  { value: 'amber', label: '琥珀', bg: 'bg-amber-600' },
+  { value: 'yellow', label: '黃色', bg: 'bg-yellow-500' },
+  { value: 'lime', label: '萊姆', bg: 'bg-lime-600' },
+  { value: 'green', label: '綠色', bg: 'bg-green-600' },
+  { value: 'emerald', label: '翠綠', bg: 'bg-emerald-600' },
+  { value: 'teal', label: '藍綠', bg: 'bg-teal-600' },
+  { value: 'cyan', label: '青色', bg: 'bg-cyan-600' },
+  { value: 'sky', label: '天藍', bg: 'bg-sky-600' },
+  { value: 'blue', label: '藍色', bg: 'bg-blue-600' },
+  { value: 'indigo', label: '靛藍', bg: 'bg-indigo-600' },
+  { value: 'violet', label: '紫羅蘭', bg: 'bg-violet-600' },
+  { value: 'purple', label: '紫色', bg: 'bg-purple-600' },
+  { value: 'fuchsia', label: '桃紅', bg: 'bg-fuchsia-600' },
+  { value: 'pink', label: '粉紅', bg: 'bg-pink-600' },
+  { value: 'rose', label: '玫瑰', bg: 'bg-rose-600' },
+  { value: 'slate', label: '石板灰', bg: 'bg-slate-600' },
+  { value: 'gray', label: '灰色', bg: 'bg-gray-600' },
+  { value: 'stone', label: '石灰', bg: 'bg-stone-600' },
+];
+
+interface SortableRowProps {
+  product: Product;
+  colorInfo: typeof CARD_COLORS[number] | undefined;
+  onEdit: (product: Product) => void;
+  onDelete: (productId: string) => void;
+  onToggleStatus: (product: Product) => void;
+}
+
+function SortableRow({ product, colorInfo, onEdit, onDelete, onToggleStatus }: SortableRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: product.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <tr ref={setNodeRef} style={style} className="border-b hover:bg-gray-50">
+      <td className="py-3 px-2 w-10">
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
+        >
+          <GripVertical className="h-4 w-4 text-gray-400" />
+        </button>
+      </td>
+      <td className="py-3 px-4 font-medium">{product.name}</td>
+      <td className="py-3 px-4 text-center">
+        {colorInfo ? (
+          <div className="flex items-center justify-center gap-2">
+            <span className={`w-5 h-5 rounded ${colorInfo.bg}`} />
+            <span className="text-sm text-gray-600">{colorInfo.label}</span>
+          </div>
+        ) : (
+          <span className="text-gray-400 text-sm">自動</span>
+        )}
+      </td>
+      <td className="py-3 px-4 text-right font-semibold">NT$ {product.price}</td>
+      <td className="py-3 px-4 text-center">
+        {product.isOnPromotion ? (
+          <Badge className="bg-red-100 text-red-700">
+            促銷 NT$ {product.promotionPrice}
+          </Badge>
+        ) : (
+          <span className="text-gray-400 text-sm">-</span>
+        )}
+      </td>
+      <td className="py-3 px-4 text-center">
+        <Badge
+          variant={product.status === 'Active' ? 'default' : 'secondary'}
+          className={`cursor-pointer ${product.status === 'Active' ? 'bg-green-100 text-green-700' : ''}`}
+          onClick={() => onToggleStatus(product)}
+        >
+          {product.status === 'Active' ? '上架中' : '已下架'}
+        </Badge>
+      </td>
+      <td className="py-3 px-4">
+        <div className="flex items-center justify-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => onEdit(product)}>
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onDelete(product.id)}
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </td>
+    </tr>
+  );
+}
 
 export function ProductManagement() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -29,7 +154,15 @@ export function ProductManagement() {
     price: '',
     isOnPromotion: false,
     promotionPrice: '',
+    cardColor: '',
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -50,7 +183,7 @@ export function ProductManagement() {
 
   const handleAddProduct = () => {
     setEditingProduct(null);
-    setFormData({ name: '', price: '', isOnPromotion: false, promotionPrice: '' });
+    setFormData({ name: '', price: '', isOnPromotion: false, promotionPrice: '', cardColor: '' });
     setIsDialogOpen(true);
   };
 
@@ -61,6 +194,7 @@ export function ProductManagement() {
       price: product.price.toString(),
       isOnPromotion: product.isOnPromotion,
       promotionPrice: product.promotionPrice?.toString() ?? '',
+      cardColor: product.cardColor ?? '',
     });
     setIsDialogOpen(true);
   };
@@ -84,6 +218,26 @@ export function ProductManagement() {
     } catch (err) {
       console.error('Failed to toggle product status:', err);
       toast.error('更新狀態失敗');
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = products.findIndex((p) => p.id === active.id);
+    const newIndex = products.findIndex((p) => p.id === over.id);
+
+    const newProducts = arrayMove(products, oldIndex, newIndex);
+    setProducts(newProducts);
+
+    try {
+      await reorderProducts(newProducts.map((p) => Number(p.id)));
+      toast.success('排序已儲存');
+    } catch (err) {
+      console.error('Failed to reorder products:', err);
+      toast.error('排序儲存失敗');
+      fetchProducts();
     }
   };
 
@@ -112,6 +266,7 @@ export function ProductManagement() {
       price,
       isOnPromotion: formData.isOnPromotion,
       promotionPrice: formData.isOnPromotion ? promotionPrice : null,
+      cardColor: formData.cardColor || null,
     };
 
     try {
@@ -176,58 +331,42 @@ export function ProductManagement() {
 
       <Card>
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">商品名稱</th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">價格</th>
-                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">促銷</th>
-                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">狀態</th>
-                <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr key={product.id} className="border-b hover:bg-gray-50">
-                  <td className="py-3 px-4 font-medium">{product.name}</td>
-                  <td className="py-3 px-4 text-right font-semibold">NT$ {product.price}</td>
-                  <td className="py-3 px-4 text-center">
-                    {product.isOnPromotion ? (
-                      <Badge className="bg-red-100 text-red-700">
-                        促銷 NT$ {product.promotionPrice}
-                      </Badge>
-                    ) : (
-                      <span className="text-gray-400 text-sm">-</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <Badge
-                      variant={product.status === 'Active' ? 'default' : 'secondary'}
-                      className={`cursor-pointer ${product.status === 'Active' ? 'bg-green-100 text-green-700' : ''}`}
-                      onClick={() => handleToggleStatus(product)}
-                    >
-                      {product.status === 'Active' ? '上架中' : '已下架'}
-                    </Badge>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleEditProduct(product)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteProduct(product.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="w-10 py-3 px-2"></th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">商品名稱</th>
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">卡片顏色</th>
+                  <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">價格</th>
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">促銷</th>
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">狀態</th>
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">操作</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <SortableContext items={products.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                <tbody>
+                  {products.map((product) => {
+                    const colorInfo = CARD_COLORS.find(c => c.value === product.cardColor);
+                    return (
+                      <SortableRow
+                        key={product.id}
+                        product={product}
+                        colorInfo={colorInfo}
+                        onEdit={handleEditProduct}
+                        onDelete={handleDeleteProduct}
+                        onToggleStatus={handleToggleStatus}
+                      />
+                    );
+                  })}
+                </tbody>
+              </SortableContext>
+            </table>
+          </DndContext>
         </div>
 
         {products.length === 0 && (
@@ -238,7 +377,7 @@ export function ProductManagement() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{editingProduct ? '編輯商品' : '新增商品'}</DialogTitle>
             <DialogDescription>
@@ -266,6 +405,45 @@ export function ProductManagement() {
                 placeholder="0"
               />
             </div>
+
+            {/* 卡片顏色選擇 */}
+            <div>
+              <Label>卡片顏色</Label>
+              <div className="grid grid-cols-5 gap-2 mt-2">
+                {/* 自動（無設定） */}
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, cardColor: '' })}
+                  className={`
+                    w-full aspect-square rounded-lg border-2 flex items-center justify-center text-xs
+                    ${!formData.cardColor ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-300'}
+                    bg-gradient-to-br from-gray-200 to-gray-400
+                  `}
+                  title="自動（依 ID 分配）"
+                >
+                  <span className="text-gray-600 font-medium">自動</span>
+                </button>
+                {CARD_COLORS.map((color) => (
+                  <button
+                    key={color.value}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, cardColor: color.value })}
+                    className={`
+                      w-full aspect-square rounded-lg border-2
+                      ${color.bg}
+                      ${formData.cardColor === color.value ? 'border-orange-500 ring-2 ring-orange-200' : 'border-transparent'}
+                    `}
+                    title={color.label}
+                  />
+                ))}
+              </div>
+              {formData.cardColor && (
+                <p className="text-sm text-gray-500 mt-1">
+                  已選擇：{CARD_COLORS.find(c => c.value === formData.cardColor)?.label}
+                </p>
+              )}
+            </div>
+
             <div className="flex items-center justify-between">
               <Label htmlFor="isOnPromotion">促銷</Label>
               <Switch

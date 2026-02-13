@@ -15,6 +15,9 @@ import {
   LogOut,
   KeyRound,
   TrendingUp,
+  Boxes,
+  BookOpen,
+  PackagePlus,
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
@@ -46,6 +49,9 @@ const navigation = [
   { name: '加料管理', href: '/addons', icon: Cherry },
   { name: '訂單管理', href: '/orders', icon: ShoppingCart },
   { name: '折扣管理', href: '/discounts', icon: Tag },
+  { name: '原物料管理', href: '/materials', icon: Boxes },
+  { name: '配方設定', href: '/recipes', icon: BookOpen },
+  { name: '庫存作業', href: '/stock-operations', icon: PackagePlus },
   { name: '日結紀錄', href: '/reports', icon: BarChart3 },
   { name: 'LINE OA整合', href: '/line-oa', icon: MessageSquare },
   { name: '激勵管理', href: '/incentive', icon: TrendingUp },

@@ -4,6 +4,7 @@ export interface Product {
   price: number;
   isOnPromotion?: boolean;
   promotionPrice?: number;
+  cardColor?: string;
 }
 
 export interface Addon {
