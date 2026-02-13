@@ -61,6 +61,8 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IIncentiveService, IncentiveService>();
+builder.Services.AddHttpClient<LineWebhookService>();
+builder.Services.AddScoped<ILineWebhookService>(sp => sp.GetRequiredService<LineWebhookService>());
 builder.Services.AddScoped<IShiftService, ShiftService>();
 
 // JWT Authentication
@@ -115,6 +117,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 
 builder.Services.AddEndpointsApiExplorer();

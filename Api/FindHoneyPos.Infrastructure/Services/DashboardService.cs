@@ -125,11 +125,13 @@ public class DashboardService : IDashboardService
 
         var genderTags = new[] { "男", "女" };
         var ageTags = new[] { "成人", "學生" };
+        var relationTags = new[] { "攤商", "親友" };
 
         return new
         {
             gender = BuildTagStats(orders, genderTags),
-            age = BuildTagStats(orders, ageTags)
+            age = BuildTagStats(orders, ageTags),
+            relation = BuildTagStats(orders, relationTags)
         };
     }
 

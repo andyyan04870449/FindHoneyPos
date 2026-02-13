@@ -53,13 +53,10 @@ public class OrderService : IOrderService
             .ToListAsync();
     }
 
-    public async Task<int> GetNextDailySequenceAsync()
+    public async Task<int> GetNextShiftSequenceAsync(int shiftId)
     {
-        var today = DateTime.UtcNow.Date;
-        var tomorrow = today.AddDays(1);
-
         var maxSeq = await _context.Orders
-            .Where(o => o.Timestamp >= today && o.Timestamp < tomorrow)
+            .Where(o => o.ShiftId == shiftId)
             .MaxAsync(o => (int?)o.DailySequence);
 
         return maxSeq.HasValue ? maxSeq.Value + 1 : BusinessRules.InitialOrderSequence + 1;
@@ -67,9 +64,9 @@ public class OrderService : IOrderService
 
     public async Task<Order> CreateAsync(Order order)
     {
-        if (order.DailySequence == 0)
+        if (order.DailySequence == 0 && order.ShiftId.HasValue)
         {
-            order.DailySequence = await GetNextDailySequenceAsync();
+            order.DailySequence = await GetNextShiftSequenceAsync(order.ShiftId.Value);
         }
 
         if (string.IsNullOrEmpty(order.OrderNumber))

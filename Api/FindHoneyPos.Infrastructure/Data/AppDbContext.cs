@@ -25,6 +25,7 @@ public class AppDbContext : DbContext
     public DbSet<ProductRecipe> ProductRecipes => Set<ProductRecipe>();
     public DbSet<MaterialStockRecord> MaterialStockRecords => Set<MaterialStockRecord>();
     public DbSet<MaterialAlert> MaterialAlerts => Set<MaterialAlert>();
+    public DbSet<LineAdmin> LineAdmins => Set<LineAdmin>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

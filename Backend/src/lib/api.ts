@@ -88,7 +88,7 @@ export async function authApi<T>(path: string, options?: RequestInit): Promise<T
 }
 
 // Material API
-import type { Material, MaterialStockRecord, MaterialAlert, MaterialStatusSummary, ProductWithRecipes, ProductRecipe } from '@/types';
+import type { Material, MaterialStockRecord, MaterialAlert, MaterialStatusSummary, ProductWithRecipes, ProductRecipe, LineAdmin } from '@/types';
 
 export const getMaterials = (search?: string, status?: string) =>
   api<Material[]>(`/api/admin/materials?${new URLSearchParams({ ...(search && { search }), ...(status && { status }) })}`);
@@ -146,3 +146,15 @@ export const getDashboardLowStockAlerts = () => api<MaterialAlert[]>('/api/admin
 // Product Reorder API
 export const reorderProducts = (productIds: number[]) =>
   api<{ reordered: boolean }>('/api/admin/products/reorder', { method: 'PATCH', body: JSON.stringify({ productIds }) });
+
+// LINE Admin API
+export const getLineAdmins = () => api<LineAdmin[]>('/api/admin/line-admins');
+
+export const approveLineAdmin = (id: number) =>
+  api<LineAdmin>(`/api/admin/line-admins/${id}/approve`, { method: 'POST', body: JSON.stringify({}) });
+
+export const rejectLineAdmin = (id: number) =>
+  api<LineAdmin>(`/api/admin/line-admins/${id}/reject`, { method: 'POST', body: JSON.stringify({}) });
+
+export const removeLineAdmin = (id: number) =>
+  api<boolean>(`/api/admin/line-admins/${id}`, { method: 'DELETE' });

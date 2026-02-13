@@ -2,20 +2,24 @@ namespace FindHoneyPos.Tests.Services;
 
 using FindHoneyPos.Core.Entities;
 using FindHoneyPos.Core.Enums;
+using FindHoneyPos.Core.Interfaces;
 using FindHoneyPos.Infrastructure.Data;
 using FindHoneyPos.Infrastructure.Services;
 using FindHoneyPos.Tests.Helpers;
 using FluentAssertions;
+using Moq;
 
 public class ShiftServiceTests : IDisposable
 {
     private readonly AppDbContext _context;
     private readonly ShiftService _service;
+    private readonly Mock<ILineWebhookService> _lineWebhookServiceMock;
 
     public ShiftServiceTests()
     {
         _context = TestDbContextFactory.Create();
-        _service = new ShiftService(_context);
+        _lineWebhookServiceMock = new Mock<ILineWebhookService>();
+        _service = new ShiftService(_context, _lineWebhookServiceMock.Object);
     }
 
     public void Dispose() => _context.Dispose();
@@ -209,15 +213,16 @@ public class ShiftServiceTests : IDisposable
         _context.Shifts.Add(shift);
         await _context.SaveChangesAsync();
 
-        var order = TestDataBuilder.CreateOrder(total: 150m, discountAmount: 20m);
+        // UpdateStatsAsync 使用 order.Subtotal 計算營收
+        var order = TestDataBuilder.CreateOrder(subtotal: 150m, total: 130m, discountAmount: 20m);
 
         await _service.UpdateStatsAsync(shift.Id, order);
 
         var updated = await _service.GetByIdAsync(shift.Id);
         updated!.TotalOrders.Should().Be(6);
-        updated.TotalRevenue.Should().Be(650m);
-        updated.TotalDiscount.Should().Be(70m);
-        updated.NetRevenue.Should().Be(650m);
+        updated.TotalRevenue.Should().Be(650m);    // 500 + 150 (subtotal)
+        updated.TotalDiscount.Should().Be(70m);    // 50 + 20
+        updated.NetRevenue.Should().Be(580m);      // 650 - 70
     }
 
     [Fact]
@@ -257,9 +262,10 @@ public class ShiftServiceTests : IDisposable
         _context.Shifts.Add(shift);
         await _context.SaveChangesAsync();
 
-        var order1 = TestDataBuilder.CreateOrder(total: 100m, discountAmount: 10m);
-        var order2 = TestDataBuilder.CreateOrder(total: 200m, discountAmount: 20m);
-        var order3 = TestDataBuilder.CreateOrder(total: 150m, discountAmount: 15m);
+        // UpdateStatsAsync 使用 order.Subtotal 計算營收
+        var order1 = TestDataBuilder.CreateOrder(subtotal: 100m, total: 90m, discountAmount: 10m);
+        var order2 = TestDataBuilder.CreateOrder(subtotal: 200m, total: 180m, discountAmount: 20m);
+        var order3 = TestDataBuilder.CreateOrder(subtotal: 150m, total: 135m, discountAmount: 15m);
 
         await _service.UpdateStatsAsync(shift.Id, order1);
         await _service.UpdateStatsAsync(shift.Id, order2);
@@ -267,8 +273,8 @@ public class ShiftServiceTests : IDisposable
 
         var updated = await _service.GetByIdAsync(shift.Id);
         updated!.TotalOrders.Should().Be(3);
-        updated.TotalRevenue.Should().Be(450m);
-        updated.TotalDiscount.Should().Be(45m);
+        updated.TotalRevenue.Should().Be(450m);    // 100 + 200 + 150
+        updated.TotalDiscount.Should().Be(45m);    // 10 + 20 + 15
     }
 
     #endregion
