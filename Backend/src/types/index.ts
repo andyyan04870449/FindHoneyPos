@@ -251,3 +251,18 @@ export interface MaterialStatusSummary {
   outOfStockCount: number;
   activeAlertCount: number;
 }
+
+// LINE Admin Types
+export type LineAdminStatus = 'Pending' | 'Approved' | 'Rejected';
+
+export interface LineAdmin {
+  id: number;
+  lineUserId: string;
+  displayName: string | null;
+  pictureUrl: string | null;
+  status: LineAdminStatus;
+  approvedByName: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+  isActive: boolean;
+}

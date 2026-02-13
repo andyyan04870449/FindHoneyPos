@@ -18,6 +18,7 @@ import {
   Boxes,
   BookOpen,
   PackagePlus,
+  UserCheck,
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
@@ -54,6 +55,7 @@ const navigation = [
   { name: '庫存作業', href: '/stock-operations', icon: PackagePlus },
   { name: '日結紀錄', href: '/reports', icon: BarChart3 },
   { name: 'LINE OA整合', href: '/line-oa', icon: MessageSquare },
+  { name: 'LINE 管理員', href: '/line-admins', icon: UserCheck },
   { name: '激勵管理', href: '/incentive', icon: TrendingUp },
   { name: '帳號管理', href: '/accounts', icon: Users },
   { name: '操作紀錄', href: '/audit-logs', icon: ClipboardList },

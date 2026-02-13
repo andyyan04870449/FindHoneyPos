@@ -18,6 +18,7 @@ import { IncentiveManagement } from '@/app/pages/IncentiveManagement';
 import { MaterialManagement } from '@/app/pages/MaterialManagement';
 import { RecipeManagement } from '@/app/pages/RecipeManagement';
 import { StockOperations } from '@/app/pages/StockOperations';
+import { LineAdminManagement } from '@/app/pages/LineAdminManagement';
 
 export default function App() {
   return (
@@ -43,6 +44,7 @@ export default function App() {
               <Route path="materials" element={<MaterialManagement />} />
               <Route path="recipes" element={<RecipeManagement />} />
               <Route path="stock-operations" element={<StockOperations />} />
+              <Route path="line-admins" element={<LineAdminManagement />} />
             </Route>
           </Route>
         </Routes>

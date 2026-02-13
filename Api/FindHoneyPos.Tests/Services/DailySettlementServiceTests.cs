@@ -2,20 +2,24 @@ namespace FindHoneyPos.Tests.Services;
 
 using FindHoneyPos.Core.Entities;
 using FindHoneyPos.Core.Enums;
+using FindHoneyPos.Core.Interfaces;
 using FindHoneyPos.Infrastructure.Data;
 using FindHoneyPos.Infrastructure.Services;
 using FindHoneyPos.Tests.Helpers;
 using FluentAssertions;
+using Moq;
 
 public class DailySettlementServiceTests : IDisposable
 {
     private readonly AppDbContext _context;
     private readonly DailySettlementService _service;
+    private readonly Mock<ILineWebhookService> _lineWebhookServiceMock;
 
     public DailySettlementServiceTests()
     {
         _context = TestDbContextFactory.Create();
-        _service = new DailySettlementService(_context);
+        _lineWebhookServiceMock = new Mock<ILineWebhookService>();
+        _service = new DailySettlementService(_context, _lineWebhookServiceMock.Object);
     }
 
     public void Dispose() => _context.Dispose();
