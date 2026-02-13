@@ -20,10 +20,10 @@ public class DailySettlementServiceTests : IDisposable
 
     public void Dispose() => _context.Dispose();
 
-    private async Task SeedTodayCompletedOrder(decimal total = 100m, decimal discountAmount = 0m)
+    private async Task SeedTodayCompletedOrder(decimal subtotal = 100m, decimal total = 100m, decimal discountAmount = 0m)
     {
         var today = DateTime.UtcNow.Date;
-        var order = TestDataBuilder.CreateOrder(total: total, discountAmount: discountAmount,
+        var order = TestDataBuilder.CreateOrder(subtotal: subtotal, total: total, discountAmount: discountAmount,
             status: OrderStatus.Completed, timestamp: today.AddHours(10));
         order.OrderNumber = $"#D{_context.Orders.Count() + 1}";
         order.DailySequence = 126 + _context.Orders.Count();
@@ -37,16 +37,16 @@ public class DailySettlementServiceTests : IDisposable
     [Fact]
     public async Task SubmitAsync_ShouldCalculateFromCompletedOrders()
     {
-        await SeedTodayCompletedOrder(total: 200m, discountAmount: 10m);
-        await SeedTodayCompletedOrder(total: 300m, discountAmount: 20m);
+        await SeedTodayCompletedOrder(subtotal: 210m, total: 200m, discountAmount: 10m);
+        await SeedTodayCompletedOrder(subtotal: 320m, total: 300m, discountAmount: 20m);
 
         var settlement = new DailySettlement();
         var result = await _service.SubmitAsync(settlement);
 
         result.TotalOrders.Should().Be(2);
-        result.TotalRevenue.Should().Be(500m);
-        result.TotalDiscount.Should().Be(30m);
-        result.NetRevenue.Should().Be(500m);
+        result.TotalRevenue.Should().Be(530m);    // 210 + 320 (subtotal sum)
+        result.TotalDiscount.Should().Be(30m);    // 10 + 20
+        result.NetRevenue.Should().Be(500m);      // 530 - 30 = 500
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class DailySettlementServiceTests : IDisposable
     [Fact]
     public async Task SubmitAsync_ShouldExcludeCancelledOrders()
     {
-        await SeedTodayCompletedOrder(total: 200m);
+        await SeedTodayCompletedOrder(subtotal: 200m, total: 200m);
 
         var today = DateTime.UtcNow.Date;
         var cancelled = TestDataBuilder.CreateOrder(total: 100m, status: OrderStatus.Cancelled, timestamp: today.AddHours(11));
