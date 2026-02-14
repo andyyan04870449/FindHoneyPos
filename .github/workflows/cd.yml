@@ -17,8 +17,9 @@ jobs:
         id: version
         run: |
           GIT_COMMIT=$(git rev-parse --short HEAD)
-          # Use the latest tag reachable from HEAD; fall back to 'dev' if none
-          APP_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0-dev")
+          # Auto-increment patch via commit count (bump major.minor by creating new tag e.g. v2.0.0)
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          APP_VERSION="v1.0.${COMMIT_COUNT}"
           echo "APP_VERSION=${APP_VERSION}" >> "$GITHUB_ENV"
           echo "GIT_COMMIT=${GIT_COMMIT}" >> "$GITHUB_ENV"
           echo "Version: ${APP_VERSION}+${GIT_COMMIT}"
