@@ -1,5 +1,6 @@
 namespace FindHoneyPos.Api.Controllers.Pos;
 
+using System.Security.Claims;
 using FindHoneyPos.Api.DTOs;
 using FindHoneyPos.Core.Constants;
 using FindHoneyPos.Core.Entities;
@@ -25,7 +26,11 @@ public class PosOrdersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateOrderRequest request)
     {
-        var shift = await _shiftService.GetCurrentOpenAsync(request.DeviceId);
+        var userId = GetCurrentUserId();
+        if (userId == null)
+            return Unauthorized(ApiResponse<object>.Fail("無法識別使用者"));
+
+        var shift = await _shiftService.GetCurrentOpenAsync(userId.Value);
         if (shift == null)
             return BadRequest(ApiResponse<object>.Fail("尚未開班，請先開班再建立訂單"));
 
@@ -45,9 +50,11 @@ public class PosOrdersController : ControllerBase
     [HttpPost("batch")]
     public async Task<IActionResult> BatchCreate([FromBody] BatchOrdersRequest request)
     {
-        // 取第一筆的 DeviceId 查班次
-        var deviceId = request.Orders.FirstOrDefault()?.DeviceId;
-        var shift = await _shiftService.GetCurrentOpenAsync(deviceId);
+        var userId = GetCurrentUserId();
+        if (userId == null)
+            return Unauthorized(ApiResponse<object>.Fail("無法識別使用者"));
+
+        var shift = await _shiftService.GetCurrentOpenAsync(userId.Value);
         if (shift == null)
             return BadRequest(ApiResponse<object>.Fail("尚未開班，請先開班再建立訂單"));
 
@@ -138,5 +145,12 @@ public class PosOrdersController : ControllerBase
             CustomerTag = request.CustomerTag,
             Items = items,
         };
+    }
+
+    private int? GetCurrentUserId()
+    {
+        var sub = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                  ?? User.FindFirst("sub")?.Value;
+        return int.TryParse(sub, out var id) ? id : null;
     }
 }

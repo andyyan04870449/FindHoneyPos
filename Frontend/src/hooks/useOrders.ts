@@ -10,18 +10,15 @@ interface UseOrdersOptions {
   orderItems: OrderItem[];
   setOrderItems: (items: OrderItem[]) => void;
   isOnline: boolean;
-  deviceId: string;
   setUnsyncedCount: React.Dispatch<React.SetStateAction<number>>;
   onOrderCreated?: () => void;
 }
 
 function buildCreateOrderRequest(
-  deviceId: string,
   orderItems: OrderItem[],
   discountInfo: DiscountInfo
 ): CreateOrderRequest {
   return {
-    deviceId,
     items: orderItems.map((item) => {
       const addonTotal = item.addons?.reduce((sum, a) => sum + a.price, 0) ?? 0;
       return {
@@ -75,7 +72,6 @@ export function useOrders({
   orderItems,
   setOrderItems,
   isOnline,
-  deviceId,
   setUnsyncedCount,
   onOrderCreated,
 }: UseOrdersOptions) {
@@ -104,7 +100,7 @@ export function useOrders({
         ...discountInfo,
       });
 
-      const request = buildCreateOrderRequest(deviceId, orderItems, discountInfo);
+      const request = buildCreateOrderRequest(orderItems, discountInfo);
 
       if (isOnline) {
         toast.loading('正在處理訂單...');
@@ -157,7 +153,7 @@ export function useOrders({
         logger.systemEvent('訂單離線暫存', { localId: pending.localId });
       }
     },
-    [orderItems, isOnline, deviceId, setOrderItems, setUnsyncedCount, onOrderCreated]
+    [orderItems, isOnline, setOrderItems, setUnsyncedCount, onOrderCreated]
   );
 
   return {

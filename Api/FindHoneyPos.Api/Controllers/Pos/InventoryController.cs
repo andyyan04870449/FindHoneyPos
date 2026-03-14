@@ -1,5 +1,6 @@
 namespace FindHoneyPos.Api.Controllers.Pos;
 
+using System.Security.Claims;
 using FindHoneyPos.Api.DTOs;
 using FindHoneyPos.Core.Entities;
 using FindHoneyPos.Core.Interfaces;
@@ -24,7 +25,12 @@ public class InventoryController : ControllerBase
     public async Task<IActionResult> Submit([FromBody] SubmitSettlementRequest request)
     {
         // 若有 open shift，委派給 ShiftService.CloseAsync
-        var shift = await _shiftService.GetCurrentOpenAsync(request.DeviceId);
+        var userId = GetCurrentUserId();
+        Shift? shift = null;
+        if (userId != null)
+        {
+            shift = await _shiftService.GetCurrentOpenAsync(userId.Value);
+        }
         if (shift != null)
         {
             var settlementData = new DailySettlement
@@ -85,5 +91,12 @@ public class InventoryController : ControllerBase
                 settlement.DeviceId, settlement.SubmittedAt,
                 settlement.IncentiveTarget, settlement.IncentiveItemsSold, settlement.IncentiveAchieved)
         }));
+    }
+
+    private int? GetCurrentUserId()
+    {
+        var sub = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                  ?? User.FindFirst("sub")?.Value;
+        return int.TryParse(sub, out var id) ? id : null;
     }
 }

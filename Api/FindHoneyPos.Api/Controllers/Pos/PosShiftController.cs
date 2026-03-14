@@ -1,5 +1,6 @@
 namespace FindHoneyPos.Api.Controllers.Pos;
 
+using System.Security.Claims;
 using FindHoneyPos.Api.DTOs;
 using FindHoneyPos.Core.Entities;
 using FindHoneyPos.Core.Interfaces;
@@ -21,11 +22,15 @@ public class PosShiftController : ControllerBase
     }
 
     [HttpPost("open")]
-    public async Task<IActionResult> Open([FromBody] OpenShiftRequest request)
+    public async Task<IActionResult> Open([FromBody] OpenShiftRequest? request)
     {
+        var userId = GetCurrentUserId();
+        if (userId == null)
+            return Unauthorized(ApiResponse<object>.Fail("無法識別使用者"));
+
         try
         {
-            var shift = await _shiftService.OpenAsync(request.DeviceId);
+            var shift = await _shiftService.OpenAsync(userId.Value, request?.DeviceId);
             return Ok(ApiResponse<ShiftResponse>.Ok(MapToResponse(shift)));
         }
         catch (InvalidOperationException ex)
@@ -35,9 +40,13 @@ public class PosShiftController : ControllerBase
     }
 
     [HttpGet("current")]
-    public async Task<IActionResult> GetCurrent([FromQuery] string? deviceId)
+    public async Task<IActionResult> GetCurrent()
     {
-        var shift = await _shiftService.GetCurrentOpenAsync(deviceId);
+        var userId = GetCurrentUserId();
+        if (userId == null)
+            return Unauthorized(ApiResponse<object>.Fail("無法識別使用者"));
+
+        var shift = await _shiftService.GetCurrentOpenAsync(userId.Value);
         if (shift == null)
             return Ok(ApiResponse<ShiftStatusResponse>.Ok(new ShiftStatusResponse(false, null)));
 
@@ -108,6 +117,13 @@ public class PosShiftController : ControllerBase
         ));
 
         return Ok(ApiResponse<IEnumerable<OrderResponse>>.Ok(response));
+    }
+
+    private int? GetCurrentUserId()
+    {
+        var sub = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                  ?? User.FindFirst("sub")?.Value;
+        return int.TryParse(sub, out var id) ? id : null;
     }
 
     private static ShiftResponse MapToResponse(Shift shift) => new(

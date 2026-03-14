@@ -1,5 +1,6 @@
 namespace FindHoneyPos.Api.Controllers.Pos;
 
+using System.Security.Claims;
 using FindHoneyPos.Api.DTOs;
 using FindHoneyPos.Core.Entities;
 using FindHoneyPos.Core.Interfaces;
@@ -23,9 +24,12 @@ public class SyncController : ControllerBase
     [HttpPost("orders")]
     public async Task<IActionResult> SyncOrders([FromBody] BatchSyncRequest request)
     {
-        // 取第一筆的 DeviceId 查班次
-        var deviceId = request.Orders.FirstOrDefault()?.Request.DeviceId;
-        var shift = await _shiftService.GetCurrentOpenAsync(deviceId);
+        var userId = GetCurrentUserId();
+        Shift? shift = null;
+        if (userId != null)
+        {
+            shift = await _shiftService.GetCurrentOpenAsync(userId.Value);
+        }
 
         var orderRequests = request.Orders.Select(o => o.Request);
         var orders = orderRequests.Select(r =>
@@ -46,13 +50,19 @@ public class SyncController : ControllerBase
     }
 
     [HttpGet("status")]
-    public IActionResult GetStatus([FromQuery] string? deviceId = null)
+    public IActionResult GetStatus()
     {
         return Ok(ApiResponse<object>.Ok(new
         {
             connected = true,
-            lastSync = DateTime.UtcNow,
-            deviceId
+            lastSync = DateTime.UtcNow
         }));
+    }
+
+    private int? GetCurrentUserId()
+    {
+        var sub = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                  ?? User.FindFirst("sub")?.Value;
+        return int.TryParse(sub, out var id) ? id : null;
     }
 }

@@ -86,7 +86,7 @@ export interface ApiResponse<T> {
 }
 
 export interface CreateOrderRequest {
-  deviceId: string;
+  deviceId?: string;
   items: {
     productId: number;
     productName: string;
@@ -114,7 +114,7 @@ export interface BatchSyncResponse {
 }
 
 export interface SubmitSettlementRequest {
-  deviceId: string;
+  deviceId?: string;
   inventoryCounts: Record<number, number>;
   incentiveTarget?: number;
   incentiveItemsSold?: number;

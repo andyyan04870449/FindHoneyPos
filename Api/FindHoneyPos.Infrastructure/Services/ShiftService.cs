@@ -17,18 +17,19 @@ public class ShiftService : IShiftService
         _lineWebhookService = lineWebhookService;
     }
 
-    public async Task<Shift> OpenAsync(string? deviceId)
+    public async Task<Shift> OpenAsync(int userId, string? deviceId = null)
     {
-        // 檢查是否已有開啟的班次
+        // 檢查是否已有開啟的班次 (改用 UserId 查詢)
         var existing = await _context.Shifts
-            .FirstOrDefaultAsync(s => s.DeviceId == deviceId && s.Status == ShiftStatus.Open);
+            .FirstOrDefaultAsync(s => s.AdminUserId == userId && s.Status == ShiftStatus.Open);
 
         if (existing != null)
-            throw new InvalidOperationException("該裝置已有開啟的班次，請先關班再開新班次");
+            throw new InvalidOperationException("您已有開啟的班次，請先關班再開新班次");
 
         var shift = new Shift
         {
-            DeviceId = deviceId,
+            AdminUserId = userId,
+            DeviceId = deviceId, // 保留 DeviceId 供參考，但不用於查詢
             Status = ShiftStatus.Open,
             OpenedAt = DateTime.UtcNow,
         };
@@ -48,10 +49,10 @@ public class ShiftService : IShiftService
         return shift;
     }
 
-    public async Task<Shift?> GetCurrentOpenAsync(string? deviceId)
+    public async Task<Shift?> GetCurrentOpenAsync(int userId)
     {
         return await _context.Shifts
-            .FirstOrDefaultAsync(s => s.DeviceId == deviceId && s.Status == ShiftStatus.Open);
+            .FirstOrDefaultAsync(s => s.AdminUserId == userId && s.Status == ShiftStatus.Open);
     }
 
     public async Task<Shift?> GetByIdAsync(int id)

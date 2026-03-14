@@ -36,6 +36,7 @@ export default function App() {
   const { user, isAuthenticated, isInitialized, isLoading: authLoading, login, logout, register } = useAuth();
 
   const [unsyncedCount, setUnsyncedCount] = useState(() => orderQueue.getCount());
+  // deviceId 保留用於顯示（debug 用途），但不再用於識別班次
   const [deviceId] = useState(generateDeviceId);
   const [currentShift, setCurrentShift] = useState<ShiftResponse | null>(null);
   const [shiftLoading, setShiftLoading] = useState(false);
@@ -68,12 +69,12 @@ export default function App() {
   // 訂單建立後刷新班次統計
   const refreshShift = useCallback(() => {
     if (!currentShift) return;
-    posApi.getCurrentShift(deviceId)
+    posApi.getCurrentShift()
       .then((res) => {
         if (res.hasOpenShift && res.shift) setCurrentShift(res.shift);
       })
       .catch(() => {});
-  }, [currentShift, deviceId]);
+  }, [currentShift]);
 
   const {
     completedOrders,
@@ -85,7 +86,6 @@ export default function App() {
     orderItems,
     setOrderItems: (items) => setOrderItems(items),
     isOnline,
-    deviceId,
     setUnsyncedCount,
     onOrderCreated: refreshShift,
   });
@@ -101,7 +101,7 @@ export default function App() {
   useEffect(() => {
     if (!isAuthenticated) return;
     setShiftLoading(true);
-    posApi.getCurrentShift(deviceId)
+    posApi.getCurrentShift()
       .then((res) => {
         if (res.hasOpenShift && res.shift) {
           setCurrentShift(res.shift);
@@ -113,13 +113,13 @@ export default function App() {
         logger.error('載入班次失敗', { error: String(err) });
       })
       .finally(() => setShiftLoading(false));
-  }, [isAuthenticated, deviceId]);
+  }, [isAuthenticated]);
 
   // 開班
   const handleOpenShift = useCallback(async () => {
     setShiftLoading(true);
     try {
-      const shift = await posApi.openShift(deviceId);
+      const shift = await posApi.openShift();
       setCurrentShift(shift);
       await refetchProducts();
       toast.success('班次已開啟');
@@ -130,7 +130,7 @@ export default function App() {
     } finally {
       setShiftLoading(false);
     }
-  }, [deviceId, refetchProducts]);
+  }, [refetchProducts]);
 
   // 網路恢復時自動同步離線訂單
   useEffect(() => {
@@ -331,7 +331,6 @@ export default function App() {
           } else {
             // 舊邏輯（向下相容）
             await posApi.submitSettlement({
-              deviceId,
               inventoryCounts,
               incentiveTarget: incentiveEnabled ? incentiveTarget : 0,
               incentiveItemsSold: itemsSold,
@@ -351,7 +350,7 @@ export default function App() {
         logger.userAction('關班作業離線暫存', { inventory });
       }
     },
-    [completedOrders, isOnline, deviceId, incentiveEnabled, incentiveTarget, currentShift, todayItemsSold, setCompletedOrders]
+    [completedOrders, isOnline, incentiveEnabled, incentiveTarget, currentShift, todayItemsSold, setCompletedOrders]
   );
 
   // Auth loading state

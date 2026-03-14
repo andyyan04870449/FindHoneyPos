@@ -16,6 +16,10 @@ public class Shift
     public decimal TotalDiscount { get; set; }
     public decimal NetRevenue { get; set; }
 
+    // 用於識別班次的使用者 (取代 DeviceId)
+    public int? AdminUserId { get; set; }
+    public AdminUser? AdminUser { get; set; }
+
     // Navigation
     public ICollection<Order> Orders { get; set; } = new List<Order>();
     public int? SettlementId { get; set; }

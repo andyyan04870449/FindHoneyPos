@@ -212,18 +212,16 @@ export const posApi = {
   },
 
   /** 開班 */
-  openShift(deviceId: string): Promise<ShiftResponse> {
+  openShift(): Promise<ShiftResponse> {
     return fetchApi<ShiftResponse>('/api/pos/shift/open', {
       method: 'POST',
-      body: JSON.stringify({ deviceId }),
+      body: JSON.stringify({}),
     });
   },
 
   /** 取得當前班次 */
-  getCurrentShift(deviceId: string): Promise<ShiftStatusResponse> {
-    return fetchApi<ShiftStatusResponse>(
-      `/api/pos/shift/current?deviceId=${encodeURIComponent(deviceId)}`
-    );
+  getCurrentShift(): Promise<ShiftStatusResponse> {
+    return fetchApi<ShiftStatusResponse>('/api/pos/shift/current');
   },
 
   /** 取得班次訂單列表 */
