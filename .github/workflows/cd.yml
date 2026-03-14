@@ -59,7 +59,9 @@ jobs:
         working-directory: Api
         run: |
           dotnet restore
-          dotnet build -c Release /p:Version=${{ env.APP_VERSION }}
+          # Remove 'v' prefix for dotnet version (e.g. v1.0.74 -> 1.0.74)
+          DOTNET_VERSION="${APP_VERSION#v}"
+          dotnet build -c Release /p:Version=${DOTNET_VERSION}
 
       # Ensure PostgreSQL is running
       - name: Ensure PostgreSQL
