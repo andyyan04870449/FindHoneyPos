@@ -11,10 +11,12 @@ RUN dotnet restore FindHoneyPos.Api/FindHoneyPos.Api.csproj
 
 # Copy everything and publish
 COPY . .
-RUN dotnet publish FindHoneyPos.Api/FindHoneyPos.Api.csproj \
+# Remove 'v' prefix for dotnet version (e.g. v1.0.76 -> 1.0.76)
+RUN DOTNET_VERSION=$(echo "${APP_VERSION}" | sed 's/^v//') && \
+    dotnet publish FindHoneyPos.Api/FindHoneyPos.Api.csproj \
     -c Release \
     -o /app/publish \
-    /p:Version=${APP_VERSION}
+    /p:Version=${DOTNET_VERSION}
 
 # ---------- runtime stage ----------
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
