@@ -29,9 +29,10 @@ public class ShiftServiceTests : IDisposable
     [Fact]
     public async Task OpenAsync_NoExistingShift_ShouldCreateNewShift()
     {
-        var result = await _service.OpenAsync("device-01");
+        var result = await _service.OpenAsync(userId: 1, deviceId: "device-01");
 
         result.Should().NotBeNull();
+        result.AdminUserId.Should().Be(1);
         result.DeviceId.Should().Be("device-01");
         result.Status.Should().Be(ShiftStatus.Open);
         result.OpenedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
@@ -40,7 +41,7 @@ public class ShiftServiceTests : IDisposable
     [Fact]
     public async Task OpenAsync_ShouldInitializeStatsToZero()
     {
-        var result = await _service.OpenAsync("device-01");
+        var result = await _service.OpenAsync(userId: 1, deviceId: "device-01");
 
         result.TotalOrders.Should().Be(0);
         result.TotalRevenue.Should().Be(0);
@@ -51,11 +52,11 @@ public class ShiftServiceTests : IDisposable
     [Fact]
     public async Task OpenAsync_ExistingOpenShift_ShouldThrow()
     {
-        var existingShift = TestDataBuilder.CreateShift(deviceId: "device-01", status: ShiftStatus.Open);
+        var existingShift = TestDataBuilder.CreateShift(adminUserId: 1, status: ShiftStatus.Open);
         _context.Shifts.Add(existingShift);
         await _context.SaveChangesAsync();
 
-        var act = () => _service.OpenAsync("device-01");
+        var act = () => _service.OpenAsync(userId: 1);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*已有開啟的班次*");
@@ -64,11 +65,11 @@ public class ShiftServiceTests : IDisposable
     [Fact]
     public async Task OpenAsync_ExistingClosedShift_ShouldCreateNewShift()
     {
-        var closedShift = TestDataBuilder.CreateShift(deviceId: "device-01", status: ShiftStatus.Closed);
+        var closedShift = TestDataBuilder.CreateShift(adminUserId: 1, status: ShiftStatus.Closed);
         _context.Shifts.Add(closedShift);
         await _context.SaveChangesAsync();
 
-        var result = await _service.OpenAsync("device-01");
+        var result = await _service.OpenAsync(userId: 1);
 
         result.Should().NotBeNull();
         result.Status.Should().Be(ShiftStatus.Open);
@@ -76,24 +77,25 @@ public class ShiftServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task OpenAsync_DifferentDevice_ShouldCreateNewShift()
+    public async Task OpenAsync_DifferentUser_ShouldCreateNewShift()
     {
-        var existingShift = TestDataBuilder.CreateShift(deviceId: "device-01", status: ShiftStatus.Open);
+        var existingShift = TestDataBuilder.CreateShift(adminUserId: 1, status: ShiftStatus.Open);
         _context.Shifts.Add(existingShift);
         await _context.SaveChangesAsync();
 
-        var result = await _service.OpenAsync("device-02");
+        var result = await _service.OpenAsync(userId: 2);
 
         result.Should().NotBeNull();
-        result.DeviceId.Should().Be("device-02");
+        result.AdminUserId.Should().Be(2);
     }
 
     [Fact]
     public async Task OpenAsync_NullDeviceId_ShouldWork()
     {
-        var result = await _service.OpenAsync(null);
+        var result = await _service.OpenAsync(userId: 1, deviceId: null);
 
         result.Should().NotBeNull();
+        result.AdminUserId.Should().Be(1);
         result.DeviceId.Should().BeNull();
     }
 
@@ -104,11 +106,11 @@ public class ShiftServiceTests : IDisposable
     [Fact]
     public async Task GetCurrentOpenAsync_HasOpenShift_ShouldReturn()
     {
-        var shift = TestDataBuilder.CreateShift(deviceId: "device-01", status: ShiftStatus.Open);
+        var shift = TestDataBuilder.CreateShift(adminUserId: 1, status: ShiftStatus.Open);
         _context.Shifts.Add(shift);
         await _context.SaveChangesAsync();
 
-        var result = await _service.GetCurrentOpenAsync("device-01");
+        var result = await _service.GetCurrentOpenAsync(userId: 1);
 
         result.Should().NotBeNull();
         result!.Id.Should().Be(shift.Id);
@@ -117,23 +119,23 @@ public class ShiftServiceTests : IDisposable
     [Fact]
     public async Task GetCurrentOpenAsync_NoOpenShift_ShouldReturnNull()
     {
-        var closedShift = TestDataBuilder.CreateShift(deviceId: "device-01", status: ShiftStatus.Closed);
+        var closedShift = TestDataBuilder.CreateShift(adminUserId: 1, status: ShiftStatus.Closed);
         _context.Shifts.Add(closedShift);
         await _context.SaveChangesAsync();
 
-        var result = await _service.GetCurrentOpenAsync("device-01");
+        var result = await _service.GetCurrentOpenAsync(userId: 1);
 
         result.Should().BeNull();
     }
 
     [Fact]
-    public async Task GetCurrentOpenAsync_DifferentDevice_ShouldReturnNull()
+    public async Task GetCurrentOpenAsync_DifferentUser_ShouldReturnNull()
     {
-        var shift = TestDataBuilder.CreateShift(deviceId: "device-01", status: ShiftStatus.Open);
+        var shift = TestDataBuilder.CreateShift(adminUserId: 1, status: ShiftStatus.Open);
         _context.Shifts.Add(shift);
         await _context.SaveChangesAsync();
 
-        var result = await _service.GetCurrentOpenAsync("device-02");
+        var result = await _service.GetCurrentOpenAsync(userId: 2);
 
         result.Should().BeNull();
     }
@@ -145,7 +147,7 @@ public class ShiftServiceTests : IDisposable
     [Fact]
     public async Task GetByIdAsync_Exists_ShouldReturn()
     {
-        var shift = TestDataBuilder.CreateShift(deviceId: "device-01");
+        var shift = TestDataBuilder.CreateShift(deviceId: "device-01", adminUserId: 1);
         _context.Shifts.Add(shift);
         await _context.SaveChangesAsync();
 
@@ -166,7 +168,7 @@ public class ShiftServiceTests : IDisposable
     [Fact]
     public async Task GetByIdAsync_ShouldIncludeOrders()
     {
-        var shift = TestDataBuilder.CreateShift(deviceId: "device-01");
+        var shift = TestDataBuilder.CreateShift(deviceId: "device-01", adminUserId: 1);
         _context.Shifts.Add(shift);
         await _context.SaveChangesAsync();
 
@@ -187,7 +189,7 @@ public class ShiftServiceTests : IDisposable
         _context.DailySettlements.Add(settlement);
         await _context.SaveChangesAsync();
 
-        var shift = TestDataBuilder.CreateShift(deviceId: "device-01", status: ShiftStatus.Closed);
+        var shift = TestDataBuilder.CreateShift(deviceId: "device-01", adminUserId: 1, status: ShiftStatus.Closed);
         shift.SettlementId = settlement.Id;
         _context.Shifts.Add(shift);
         await _context.SaveChangesAsync();
@@ -207,6 +209,7 @@ public class ShiftServiceTests : IDisposable
     {
         var shift = TestDataBuilder.CreateShift(
             deviceId: "device-01",
+            adminUserId: 1,
             totalOrders: 5,
             totalRevenue: 500m,
             totalDiscount: 50m);
@@ -240,6 +243,7 @@ public class ShiftServiceTests : IDisposable
     {
         var shift = TestDataBuilder.CreateShift(
             deviceId: "device-01",
+            adminUserId: 1,
             status: ShiftStatus.Closed,
             totalOrders: 5,
             totalRevenue: 500m);
@@ -258,7 +262,7 @@ public class ShiftServiceTests : IDisposable
     [Fact]
     public async Task UpdateStatsAsync_MultipleOrders_ShouldAccumulateCorrectly()
     {
-        var shift = TestDataBuilder.CreateShift(deviceId: "device-01");
+        var shift = TestDataBuilder.CreateShift(deviceId: "device-01", adminUserId: 1);
         _context.Shifts.Add(shift);
         await _context.SaveChangesAsync();
 
@@ -286,6 +290,7 @@ public class ShiftServiceTests : IDisposable
     {
         var shift = TestDataBuilder.CreateShift(
             deviceId: "device-01",
+            adminUserId: 1,
             status: ShiftStatus.Open,
             totalOrders: 10,
             totalRevenue: 1000m,
@@ -321,7 +326,7 @@ public class ShiftServiceTests : IDisposable
     [Fact]
     public async Task CloseAsync_AlreadyClosed_ShouldThrow()
     {
-        var closedShift = TestDataBuilder.CreateShift(deviceId: "device-01", status: ShiftStatus.Closed);
+        var closedShift = TestDataBuilder.CreateShift(deviceId: "device-01", adminUserId: 1, status: ShiftStatus.Closed);
         _context.Shifts.Add(closedShift);
         await _context.SaveChangesAsync();
 
@@ -336,7 +341,7 @@ public class ShiftServiceTests : IDisposable
     [Fact]
     public async Task CloseAsync_ShouldSetCorrectDate()
     {
-        var shift = TestDataBuilder.CreateShift(deviceId: "device-01", status: ShiftStatus.Open);
+        var shift = TestDataBuilder.CreateShift(deviceId: "device-01", adminUserId: 1, status: ShiftStatus.Open);
         _context.Shifts.Add(shift);
         await _context.SaveChangesAsync();
 
@@ -352,6 +357,7 @@ public class ShiftServiceTests : IDisposable
     {
         var shift = TestDataBuilder.CreateShift(
             deviceId: "device-01",
+            adminUserId: 1,
             status: ShiftStatus.Open,
             totalRevenue: 1000m,
             totalDiscount: 100m);
@@ -369,7 +375,7 @@ public class ShiftServiceTests : IDisposable
     [Fact]
     public async Task CloseAsync_ShouldSetSubmittedAt()
     {
-        var shift = TestDataBuilder.CreateShift(deviceId: "device-01", status: ShiftStatus.Open);
+        var shift = TestDataBuilder.CreateShift(deviceId: "device-01", adminUserId: 1, status: ShiftStatus.Open);
         _context.Shifts.Add(shift);
         await _context.SaveChangesAsync();
 

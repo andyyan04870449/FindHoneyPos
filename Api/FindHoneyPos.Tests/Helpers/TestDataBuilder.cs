@@ -169,11 +169,13 @@ public static class TestDataBuilder
         ShiftStatus status = ShiftStatus.Open,
         int totalOrders = 0,
         decimal totalRevenue = 0m,
-        decimal totalDiscount = 0m)
+        decimal totalDiscount = 0m,
+        int? adminUserId = null)
     {
         return new Shift
         {
             DeviceId = deviceId,
+            AdminUserId = adminUserId,
             Status = status,
             OpenedAt = DateTime.UtcNow,
             TotalOrders = totalOrders,
